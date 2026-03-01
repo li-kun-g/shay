@@ -5,7 +5,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import type { MembersListVisibility } from "@prisma/client";
+
+type MembersListVisibility = "EVERYONE" | "MEMBERS_ONLY";
 
 const VALUES = new Set<MembersListVisibility>(["EVERYONE", "MEMBERS_ONLY"]);
 
@@ -24,7 +25,6 @@ export async function updateGroupMembersListVisibility(formData: FormData) {
     ? (raw as MembersListVisibility)
     : "EVERYONE";
 
-  // ✅ Must be president or admin of that group
   const group = await prisma.group.findUnique({
     where: { id: groupId },
     select: { id: true, slug: true, presidentId: true },
@@ -40,7 +40,7 @@ export async function updateGroupMembersListVisibility(formData: FormData) {
       where: {
         groupId,
         userId: myId,
-        role: { in: ["ADMIN", "PRESIDENT"] },
+        role: { in: ["ADMIN", "PRESIDENT"] as any },
       },
       select: { id: true },
     });
@@ -51,16 +51,14 @@ export async function updateGroupMembersListVisibility(formData: FormData) {
 
   await prisma.group.update({
     where: { id: groupId },
-    data: { membersListVisibility },
+    data: { membersListVisibility: membersListVisibility as any },
   });
 
-  // ✅ Revalidate pages that read this value
   revalidatePath("/settings/groups");
   if (group.slug) {
     revalidatePath(`/g/${group.slug}`);
     revalidatePath(`/g/${group.slug}/members`);
   }
 
-  // ✅ Force a fresh server render immediately so the <select> shows the new value
   redirect("/settings/groups");
 }
