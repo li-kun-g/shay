@@ -8,10 +8,29 @@ import { authOptions } from "@/lib/auth";
 
 const TAKE = 30;
 
-function decodeCursor(cursor: string | null): { joinedAt: string; id: string } | null {
+type CursorValue = { joinedAt: string; id: string } | null;
+
+type MemberRow = {
+  id: string;
+  role: "PRESIDENT" | "ADMIN" | "MEMBER";
+  position: string | null;
+  showPosition: boolean;
+  joinedAt: Date;
+  user: {
+    id: string;
+    username: string;
+    name: string | null;
+    image: string | null;
+    emoji: string;
+    major: string | null;
+    college: string;
+  };
+};
+
+function decodeCursor(cursor: string | null): CursorValue {
   if (!cursor) return null;
   try {
-    return JSON.parse(Buffer.from(cursor, "base64").toString("utf8"));
+    return JSON.parse(Buffer.from(cursor, "base64").toString("utf8")) as CursorValue;
   } catch {
     return null;
   }
@@ -27,7 +46,9 @@ export async function GET(
 ) {
   const p = await Promise.resolve(ctx.params);
   const slug = (p?.slug ?? "").trim().toLowerCase();
-  if (!slug) return NextResponse.json({ items: [], nextCursor: null }, { status: 400 });
+  if (!slug) {
+    return NextResponse.json({ items: [], nextCursor: null }, { status: 400 });
+  }
 
   const url = new URL(req.url);
   const q = (url.searchParams.get("q") ?? "").trim();
@@ -48,12 +69,11 @@ export async function GET(
     },
   });
 
-  if (!group || group.status !== "APPROVED") {
+  if (!group || group.status !== ("APPROVED" as any)) {
     return NextResponse.json({ items: [], nextCursor: null }, { status: 404 });
   }
 
-  // ✅ Privacy enforcement
-  if (group.membersListVisibility === "MEMBERS_ONLY") {
+  if (group.membersListVisibility === ("MEMBERS_ONLY" as any)) {
     if (!viewerId) {
       return NextResponse.json({ items: [], nextCursor: null }, { status: 403 });
     }
@@ -72,7 +92,7 @@ export async function GET(
     }
   }
 
-  let where: any = { groupId: group.id };
+  let where: Record<string, unknown> = { groupId: group.id };
 
   if (q) {
     where = {
@@ -99,7 +119,7 @@ export async function GET(
     };
   }
 
-  const rows = await prisma.groupMember.findMany({
+  const rows: MemberRow[] = await prisma.groupMember.findMany({
     where,
     orderBy: [{ joinedAt: "desc" }, { id: "desc" }],
     take: TAKE,
@@ -123,7 +143,7 @@ export async function GET(
     },
   });
 
-  const items = rows.map((m) => ({
+  const items = rows.map((m: MemberRow) => ({
     id: m.id,
     role: m.role,
     position: m.showPosition ? m.position : null,
