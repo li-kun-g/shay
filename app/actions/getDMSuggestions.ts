@@ -1,4 +1,3 @@
-// app/actions/getDmSuggestions.ts
 "use server";
 
 import { prisma } from "@/lib/prisma";
@@ -11,6 +10,18 @@ type SuggestedUser = {
   name: string | null;
   image: string | null;
   isFriend: boolean;
+};
+
+type FriendshipRow = {
+  userAId: string;
+  userBId: string;
+};
+
+type BasicUser = {
+  id: string;
+  username: string;
+  name: string | null;
+  image: string | null;
 };
 
 function uniq<T>(arr: T[]) {
@@ -27,8 +38,7 @@ export async function getDmSuggestions(input?: { q?: string }) {
   const qRaw = (input?.q ?? "").trim();
   const q = qRaw.toLowerCase();
 
-  // 1) friend ids (Friendship is symmetric)
-  const friendships = await prisma.friendship.findMany({
+  const friendships: FriendshipRow[] = await prisma.friendship.findMany({
     where: {
       OR: [{ userAId: myId }, { userBId: myId }],
     },
@@ -36,10 +46,9 @@ export async function getDmSuggestions(input?: { q?: string }) {
   });
 
   const friendIds = uniq(
-    friendships.map((f) => (f.userAId === myId ? f.userBId : f.userAId))
+    friendships.map((f: FriendshipRow) => (f.userAId === myId ? f.userBId : f.userAId))
   );
 
-  // Search filter (username startsWith > username contains > name contains)
   const matchWhere =
     q.length === 0
       ? {}
@@ -51,9 +60,8 @@ export async function getDmSuggestions(input?: { q?: string }) {
           ],
         };
 
-  // 2) typed query: show matches (friends first)
   if (q.length > 0) {
-    const friendsMatches = friendIds.length
+    const friendsMatches: BasicUser[] = friendIds.length
       ? await prisma.user.findMany({
           where: {
             id: { in: friendIds },
@@ -65,9 +73,9 @@ export async function getDmSuggestions(input?: { q?: string }) {
         })
       : [];
 
-    const friendMatchIds = friendsMatches.map((u) => u.id);
+    const friendMatchIds = friendsMatches.map((u: BasicUser) => u.id);
 
-    const otherMatches = await prisma.user.findMany({
+    const otherMatches: BasicUser[] = await prisma.user.findMany({
       where: {
         id: { notIn: [myId, ...friendIds, ...friendMatchIds] },
         ...matchWhere,
@@ -78,24 +86,21 @@ export async function getDmSuggestions(input?: { q?: string }) {
     });
 
     return [
-      ...friendsMatches.map((u) => ({ ...u, isFriend: true })),
-      ...otherMatches.map((u) => ({ ...u, isFriend: false })),
+      ...friendsMatches.map((u: BasicUser) => ({ ...u, isFriend: true })),
+      ...otherMatches.map((u: BasicUser) => ({ ...u, isFriend: false })),
     ] as SuggestedUser[];
   }
 
-  // 3) empty query: friends or fallback to popular users
   if (friendIds.length > 0) {
-    const friends = await prisma.user.findMany({
+    const friends: BasicUser[] = await prisma.user.findMany({
       where: { id: { in: friendIds } },
       select: { id: true, username: true, name: true, image: true },
       take: 12,
       orderBy: [{ username: "asc" }],
     });
 
-    return friends.map((u) => ({ ...u, isFriend: true })) as SuggestedUser[];
+    return friends.map((u: BasicUser) => ({ ...u, isFriend: true })) as SuggestedUser[];
   }
-
-    // --- No friends -> popular users (many friends)
 
   const aCounts = await prisma.friendship.groupBy({
     by: ["userAId"],
@@ -128,13 +133,15 @@ export async function getDmSuggestions(input?: { q?: string }) {
 
   if (popularIds.length === 0) return [];
 
-  const popularUsers = await prisma.user.findMany({
+  const popularUsers: BasicUser[] = await prisma.user.findMany({
     where: { id: { in: popularIds } },
     select: { id: true, username: true, name: true, image: true },
   });
 
-  // keep popularity order
-  const byId = new Map(popularUsers.map((u) => [u.id, u]));
-  const ordered = popularIds.map((id) => byId.get(id)).filter(Boolean) as typeof popularUsers;
+  const byId = new Map(popularUsers.map((u: BasicUser) => [u.id, u]));
+  const ordered = popularIds
+    .map((id) => byId.get(id))
+    .filter(Boolean) as BasicUser[];
 
-  return ordered.map((u) => ({ ...u, isFriend: false })) as SuggestedUser[];}
+  return ordered.map((u: BasicUser) => ({ ...u, isFriend: false })) as SuggestedUser[];
+}
