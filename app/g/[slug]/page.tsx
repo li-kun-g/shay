@@ -29,6 +29,23 @@ type PendingRequestRow = {
   };
 };
 
+type MemberRole = "PRESIDENT" | "ADMIN" | "MEMBER";
+
+type MemberRow = {
+  id: string;
+  role: MemberRole;
+  position: string | null;
+  showPosition: boolean;
+  joinedAt: Date;
+  user: {
+    id: string;
+    username: string;
+    name: string | null;
+    image: string | null;
+    emoji: string;
+  };
+};
+
 type GroupEventRow = {
   id: string;
   title: string;
@@ -438,7 +455,7 @@ async function MembersTab(props: {
     );
   }
 
-  const members = await prisma.groupMember.findMany({
+  const members: MemberRow[] = await prisma.groupMember.findMany({
     where: { groupId },
     orderBy: [{ role: "asc" }, { joinedAt: "asc" }],
     include: {
@@ -483,7 +500,7 @@ async function MembersTab(props: {
           <div className="text-sm text-gray-500">{dict["group.noMembersYet"]}</div>
         ) : (
           <div className="space-y-2">
-            {members.map((m) => {
+            {members.map((m: MemberRow) => {
               const isSelf = !!myId && m.user.id === myId;
 
               return (
