@@ -2,6 +2,7 @@
 
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -30,8 +31,7 @@ export async function approveEventRequest(requestId: string) {
     throw new Error("This request has already been processed");
   }
 
-  await prisma.$transaction(async (tx) => {
-    // Create real/published event from request
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.event.create({
       data: {
         title: request.title,
@@ -40,12 +40,11 @@ export async function approveEventRequest(requestId: string) {
         startsAt: request.startsAt,
         endsAt: request.endsAt ?? null,
         imageUrl: request.imageUrl ?? null,
-        imageKey: null, // EventRequest doesn't have imageKey in your schema
-        createdById: request.requestedById, // keep original requester as creator
+        imageKey: null,
+        createdById: request.requestedById,
       },
     });
 
-    // Mark request approved
     await tx.eventRequest.update({
       where: { id: request.id },
       data: { status: "APPROVED" },
@@ -55,4 +54,6 @@ export async function approveEventRequest(requestId: string) {
   revalidatePath("/admin/event-requests");
   revalidatePath("/events");
   revalidatePath("/events/request");
+
+  return { ok: true };
 }
