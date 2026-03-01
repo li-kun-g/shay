@@ -9,20 +9,39 @@ import { authOptions } from "@/lib/auth";
 
 const TAKE = 15;
 
-function decodeCursor(cursor: string | null): any | null {
+type CursorValue = { username: string; id: string } | null;
+
+type BasicUserRow = {
+  id: string;
+  username: string;
+};
+
+type FriendshipRow = {
+  userAId: string;
+  userBId: string;
+};
+
+type OutgoingRequestRow = {
+  toId: string;
+};
+
+type IncomingRequestRow = {
+  fromId: string;
+};
+
+function decodeCursor(cursor: string | null): CursorValue {
   if (!cursor) return null;
   try {
-    return JSON.parse(Buffer.from(cursor, "base64").toString("utf8"));
+    return JSON.parse(Buffer.from(cursor, "base64").toString("utf8")) as CursorValue;
   } catch {
     return null;
   }
 }
 
-function encodeCursor(obj: any) {
+function encodeCursor(obj: { username: string; id: string }) {
   return Buffer.from(JSON.stringify(obj), "utf8").toString("base64");
 }
 
-// Cursor is stable for username asc, id asc: { username: string, id: string }
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const q = (searchParams.get("q") ?? "").trim().toLowerCase();
@@ -36,17 +55,14 @@ export async function GET(req: Request) {
     return NextResponse.json({ items: [], nextCursor: null }, { status: 401 });
   }
 
-  // Base filters
-  const baseWhere: any = {
+  const baseWhere: Record<string, unknown> = {
     id: { not: myId },
   };
 
-  // ---------- 1) Fetch users ----------
-  let users: { id: string; username: string }[] = [];
+  let users: BasicUserRow[] = [];
 
   if (!q) {
-    // No search: normal paged list
-    let where: any = baseWhere;
+    let where: Record<string, unknown> = baseWhere;
 
     if (cursor?.username && cursor?.id) {
       where = {
@@ -64,31 +80,25 @@ export async function GET(req: Request) {
 
     users = await prisma.user.findMany({
       where,
-      orderBy: [{ username: "asc" as const }, { id: "asc" as const }],
+      orderBy: [{ username: "asc" }, { id: "asc" }],
       take: TAKE,
       select: { id: true, username: true },
     });
   } else {
-    // Search mode:
-    // 1) exact match first (optional)
-    // 2) then prefix matches (startsWith), stable ordered, cursor applies to the prefix list
+    const exact: BasicUserRow | null = !cursor
+      ? await prisma.user.findFirst({
+          where: { ...baseWhere, username: q },
+          select: { id: true, username: true },
+        })
+      : null;
 
-    const exact =
-      !cursor // only show exact match on first page for that search
-        ? await prisma.user.findFirst({
-            where: { ...baseWhere, username: q },
-            select: { id: true, username: true },
-          })
-        : null;
-
-    // Prefix list (exclude exact if we already added it)
-    const prefixBaseWhere: any = {
+    const prefixBaseWhere: Record<string, unknown> = {
       ...baseWhere,
       username: { startsWith: q },
       ...(exact ? { id: { not: exact.id } } : {}),
     };
 
-    let prefixWhere: any = prefixBaseWhere;
+    let prefixWhere: Record<string, unknown> = prefixBaseWhere;
 
     if (cursor?.username && cursor?.id) {
       prefixWhere = {
@@ -104,9 +114,9 @@ export async function GET(req: Request) {
       };
     }
 
-    const prefix = await prisma.user.findMany({
+    const prefix: BasicUserRow[] = await prisma.user.findMany({
       where: prefixWhere,
-      orderBy: [{ username: "asc" as const }, { id: "asc" as const }],
+      orderBy: [{ username: "asc" }, { id: "asc" }],
       take: TAKE - (exact ? 1 : 0),
       select: { id: true, username: true },
     });
@@ -114,10 +124,9 @@ export async function GET(req: Request) {
     users = exact ? [exact, ...prefix] : prefix;
   }
 
-  const ids = users.map((u) => u.id);
+  const ids = users.map((u: BasicUserRow) => u.id);
 
-  // ---------- 2) Friendship/request status (bulk) ----------
-  const friendships =
+  const friendships: FriendshipRow[] =
     ids.length === 0
       ? []
       : await prisma.friendship.findMany({
@@ -136,7 +145,7 @@ export async function GET(req: Request) {
     friendsSet.add(other);
   }
 
-  const outgoing =
+  const outgoing: OutgoingRequestRow[] =
     ids.length === 0
       ? []
       : await prisma.friendRequest.findMany({
@@ -144,7 +153,7 @@ export async function GET(req: Request) {
           select: { toId: true },
         });
 
-  const incoming =
+  const incoming: IncomingRequestRow[] =
     ids.length === 0
       ? []
       : await prisma.friendRequest.findMany({
@@ -152,10 +161,10 @@ export async function GET(req: Request) {
           select: { fromId: true },
         });
 
-  const outgoingSet = new Set(outgoing.map((r) => r.toId));
-  const incomingSet = new Set(incoming.map((r) => r.fromId));
+  const outgoingSet = new Set(outgoing.map((r: OutgoingRequestRow) => r.toId));
+  const incomingSet = new Set(incoming.map((r: IncomingRequestRow) => r.fromId));
 
-  const items = users.map((u) => ({
+  const items = users.map((u: BasicUserRow) => ({
     id: u.id,
     username: u.username,
     status: friendsSet.has(u.id)
@@ -167,10 +176,7 @@ export async function GET(req: Request) {
       : ("NONE" as const),
   }));
 
-  // ---------- 3) nextCursor ----------
-  // For search mode: cursor applies to the ordered username list (after exact match).
   let nextCursor: string | null = null;
-
   if (users.length === TAKE) {
     const last = users[users.length - 1];
     nextCursor = encodeCursor({ username: last.username, id: last.id });
