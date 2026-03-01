@@ -4,7 +4,20 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { NotificationType } from "@prisma/client";
+
+type NotificationType =
+  | "FRIEND_REQUEST"
+  | "FRIEND_ACCEPTED"
+  | "POST_REPLY"
+  | "POST_REACTION"
+  | "EVENT_JOINED"
+  | "EVENT_APPROVED"
+  | "EVENT_REJECTED"
+  | "GROUP_JOIN_APPROVED"
+  | "GROUP_JOIN_REJECTED"
+  | "GROUP_CREATE_APPROVED"
+  | "GROUP_CREATE_REJECTED"
+  | "SYSTEM";
 
 async function createNotificationSafe(input: {
   userId: string;
@@ -18,7 +31,7 @@ async function createNotificationSafe(input: {
     await prisma.notification.create({
       data: {
         userId: input.userId,
-        type: input.type,
+        type: input.type as any,
         title: input.title,
         body: input.body ?? null,
         href: input.href ?? null,
@@ -62,7 +75,7 @@ export async function togglePostReaction(input: {
       postId_userId_type: {
         postId,
         userId,
-        type: input.type,
+        type: input.type as any,
       },
     },
     select: { id: true },
@@ -72,7 +85,7 @@ export async function togglePostReaction(input: {
     await prisma.postReaction.delete({ where: { id: existing.id } });
   } else {
     await prisma.postReaction.create({
-      data: { postId, userId, type: input.type },
+      data: { postId, userId, type: input.type as any },
     });
 
     if (post.authorId !== userId) {
@@ -80,7 +93,7 @@ export async function togglePostReaction(input: {
 
       await createNotificationSafe({
         userId: post.authorId,
-        type: NotificationType.POST_REACTION,
+        type: "POST_REACTION",
         title: "New reaction on your post",
         body: `${me.name || me.username} reacted ${reactionEmoji} to your post`,
         href: `/post/${postId}`,
@@ -91,11 +104,12 @@ export async function togglePostReaction(input: {
     }
   }
 
-  // ✅ revalidate everywhere this post may be rendered
   revalidatePath("/");
   revalidatePath("/u");
   revalidatePath("/events");
   revalidatePath("/g");
   revalidatePath(`/u/${me.username}`);
-  revalidatePath(`/post/${postId}`); // ✅ IMPORTANT
+  revalidatePath(`/post/${postId}`);
+
+  return { ok: true };
 }
