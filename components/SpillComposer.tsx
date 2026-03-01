@@ -3,18 +3,20 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { signIn } from "next-auth/react";
 import { createPost } from "@/app/actions/createPost";
-import { PostCategory } from "@prisma/client";
 import PostImageUploader, { type UploadedPostImage } from "@/components/PostImageUploader";
 import { useI18n } from "@/components/LanguageProvider";
 
 const MAX_CHARS = 280;
 
+const POST_CATEGORIES = ["GOSSIPS", "UNI", "CONFESSIONS", "MARKET", "OTHER"] as const;
+type PostCategory = (typeof POST_CATEGORIES)[number];
+
 const CATEGORY_OPTIONS: { value: PostCategory; labelKey: string }[] = [
-  { value: PostCategory.GOSSIPS, labelKey: "cat.gossips" },
-  { value: PostCategory.UNI, labelKey: "cat.uni" },
-  { value: PostCategory.CONFESSIONS, labelKey: "cat.confessions" },
-  { value: PostCategory.MARKET, labelKey: "cat.market" },
-  { value: PostCategory.OTHER, labelKey: "cat.other" },
+  { value: "GOSSIPS", labelKey: "cat.gossips" },
+  { value: "UNI", labelKey: "cat.uni" },
+  { value: "CONFESSIONS", labelKey: "cat.confessions" },
+  { value: "MARKET", labelKey: "cat.market" },
+  { value: "OTHER", labelKey: "cat.other" },
 ];
 
 export default function SpillComposer() {
@@ -23,7 +25,7 @@ export default function SpillComposer() {
   const [open, setOpen] = useState(false);
   const [content, setContent] = useState("");
   const [anonymous, setAnonymous] = useState(true);
-  const [category, setCategory] = useState<PostCategory>(PostCategory.GOSSIPS);
+  const [category, setCategory] = useState<PostCategory>("GOSSIPS");
   const [image, setImage] = useState<UploadedPostImage | null>(null);
 
   const [isPending, startTransition] = useTransition();
@@ -57,7 +59,7 @@ export default function SpillComposer() {
   function resetAndClose() {
     setContent("");
     setAnonymous(true);
-    setCategory(PostCategory.GOSSIPS);
+    setCategory("GOSSIPS");
     setImage(null);
     setOpen(false);
   }
@@ -88,7 +90,6 @@ export default function SpillComposer() {
 
   return (
     <>
-      {/* Desktop / tablet inline composer */}
       <div className="hidden sm:block">
         <ComposerCard
           content={content}
@@ -109,7 +110,6 @@ export default function SpillComposer() {
         />
       </div>
 
-      {/* Mobile floating button */}
       <button
         className="sm:hidden fixed bottom-5 right-5 z-[120] rounded-full bg-black text-white px-5 py-3 shadow-lg active:scale-95 transition"
         onClick={() => setOpen(true)}
@@ -118,10 +118,8 @@ export default function SpillComposer() {
         {t("composer.spill")} ☕
       </button>
 
-      {/* Mobile modal composer */}
       {open && (
         <div className="sm:hidden fixed inset-0 z-[130] h-[100dvh] overflow-hidden">
-          {/* Backdrop */}
           <button
             type="button"
             aria-label={t("common.close")}
@@ -129,7 +127,6 @@ export default function SpillComposer() {
             onClick={() => setOpen(false)}
           />
 
-          {/* Centered card */}
           <div className="absolute inset-0 z-[131] flex items-center justify-center px-3 py-6">
             <div className="w-full rounded-[2rem] border bg-white p-4 shadow-2xl max-h-[88dvh] overflow-y-auto dark:bg-[var(--surface)] dark:border-[var(--border-strong)]">
               <div className="flex items-center justify-between mb-3">
@@ -172,21 +169,16 @@ export default function SpillComposer() {
 function ComposerCard(props: {
   content: string;
   setContent: (v: string) => void;
-
   anonymous: boolean;
   setAnonymous: (v: boolean) => void;
-
   category: PostCategory;
   setCategory: (v: PostCategory) => void;
-
   remaining: number;
   canPost: boolean;
   isPending: boolean;
   onSubmit: () => void;
-
   image: UploadedPostImage | null;
   setImage: (v: UploadedPostImage | null) => void;
-
   compact?: boolean;
 }) {
   const { t } = useI18n();
