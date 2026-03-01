@@ -1,64 +1,55 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+
+type SelectedUser = { id: string };
 
 export async function createGroupChat(input: {
-  name: string;
-  usernames: string;
+  name?: string;
+  memberIds: string[];
 }) {
   const session = await getServerSession(authOptions);
-  if (!session?.user || !("id" in session.user)) {
-    redirect("/signin");
-  }
+  const myId =
+    session?.user && "id" in session.user ? (session.user.id as string) : null;
 
-  const myId = session.user.id as string;
-  const name = input.name.trim();
+  if (!myId) throw new Error("UNAUTHORIZED");
 
-  if (!name) throw new Error("GROUP_NAME_REQUIRED");
-
-  const usernames = input.usernames
-    .split(",")
-    .map((x) => x.trim().replace(/^@+/, "").toLowerCase())
-    .filter(Boolean);
-
-  const uniqueUsernames = Array.from(new Set(usernames));
-
-  // creator + selected users <= 150
-  if (uniqueUsernames.length + 1 > 150) {
-    throw new Error("GROUP_MEMBER_LIMIT");
-  }
-
-  const users = uniqueUsernames.length
-    ? await prisma.user.findMany({
-        where: { username: { in: uniqueUsernames } },
-        select: { id: true },
-      })
+  const requestedIds = Array.isArray(input.memberIds)
+    ? input.memberIds.map((id) => String(id).trim()).filter(Boolean)
     : [];
 
-  const memberIds = Array.from(new Set([myId, ...users.map((u) => u.id)]));
+  const users: SelectedUser[] =
+    requestedIds.length > 0
+      ? await prisma.user.findMany({
+          where: {
+            id: { in: requestedIds },
+          },
+          select: { id: true },
+        })
+      : [];
+
+  const memberIds = Array.from(new Set([myId, ...users.map((u: SelectedUser) => u.id)]));
 
   if (memberIds.length > 150) {
     throw new Error("GROUP_MEMBER_LIMIT");
   }
 
-  const now = new Date();
-
   const convo = await prisma.conversation.create({
     data: {
       type: "GROUP",
-      name,
+      name: input.name?.trim() || null,
       members: {
         create: memberIds.map((userId) => ({
           userId,
-          lastReadAt: userId === myId ? now : null,
         })),
       },
     },
-    select: { id: true },
+    select: {
+      id: true,
+    },
   });
 
-  redirect(`/messages/${convo.id}`);
+  return { id: convo.id };
 }
