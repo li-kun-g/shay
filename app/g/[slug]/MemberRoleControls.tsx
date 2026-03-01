@@ -3,17 +3,20 @@
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import type { GroupRole } from "@prisma/client";
+
+type GroupRole = "PRESIDENT" | "ADMIN" | "MEMBER";
 
 async function requireAuth() {
   const session = await getServerSession(authOptions);
-  if (!session?.user || !("id" in session.user)) throw new Error("Not authenticated");
+  if (!session?.user || !("id" in session.user)) {
+    throw new Error("Not authenticated");
+  }
   return session;
 }
 
 async function requirePresident(groupId: string) {
   const session = await requireAuth();
-  const meId = (session.user as any).id as string;
+  const meId = session.user.id as string;
 
   const me = await prisma.groupMember.findFirst({
     where: { groupId, userId: meId },
@@ -36,16 +39,14 @@ export async function setMemberRoleAction(input: {
   const { groupId, userId, role } = input;
   const { meId } = await requirePresident(groupId);
 
-  // cannot change yourself
   if (userId === meId) throw new Error("You cannot change your own role");
 
   const target = await prisma.groupMember.findFirst({
     where: { groupId, userId },
     select: { role: true },
   });
-  if (!target) throw new Error("Member not found");
 
-  // cannot change president
+  if (!target) throw new Error("Member not found");
   if (target.role === "PRESIDENT") throw new Error("Cannot change president role");
 
   await prisma.groupMember.update({
@@ -67,8 +68,8 @@ export async function removeMemberAction(input: { groupId: string; userId: strin
     where: { groupId, userId },
     select: { role: true },
   });
-  if (!target) return { ok: true };
 
+  if (!target) return { ok: true };
   if (target.role === "PRESIDENT") throw new Error("Cannot remove president");
 
   await prisma.groupMember.delete({
