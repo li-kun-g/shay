@@ -17,6 +17,38 @@ import {
 
 const LANG_COOKIE = "kimepish-lang";
 
+type IncomingRequestRow = {
+  id: string;
+  from: {
+    id: string;
+    username: string;
+  };
+};
+
+type FriendshipRow = {
+  userAId: string;
+  userBId: string;
+  userA: {
+    id: string;
+    username: string;
+    campusStatus: string | null;
+    campusStatusExpiresAt: Date | null;
+  };
+  userB: {
+    id: string;
+    username: string;
+    campusStatus: string | null;
+    campusStatusExpiresAt: Date | null;
+  };
+};
+
+type FriendItem = {
+  id: string;
+  username: string;
+  campusStatus: string | null;
+  campusStatusExpiresAt: Date | null;
+};
+
 export default async function FriendsPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user || !("id" in session.user)) return null;
@@ -34,13 +66,13 @@ export default async function FriendsPage() {
   if (me?.language) lang = me.language as Lang;
   const dict = getDict(lang);
 
-  const incoming = await prisma.friendRequest.findMany({
+  const incoming: IncomingRequestRow[] = await prisma.friendRequest.findMany({
     where: { toId: myId, status: "PENDING" },
     include: { from: { select: { id: true, username: true } } },
     orderBy: { createdAt: "desc" },
   });
 
-  const friendships = await prisma.friendship.findMany({
+  const friendships: FriendshipRow[] = await prisma.friendship.findMany({
     where: {
       OR: [{ userAId: myId }, { userBId: myId }],
     },
@@ -65,7 +97,7 @@ export default async function FriendsPage() {
     orderBy: { createdAt: "desc" },
   });
 
-  const friends = friendships.map((f) =>
+  const friends: FriendItem[] = friendships.map((f: FriendshipRow) =>
     f.userAId === myId ? f.userB : f.userA
   );
 
@@ -79,7 +111,7 @@ export default async function FriendsPage() {
         {incoming.length === 0 ? (
           <p className="text-sm text-gray-400">{dict["friends.noRequests"]}</p>
         ) : (
-          incoming.map((r) => (
+          incoming.map((r: IncomingRequestRow) => (
             <div
               key={r.id}
               className="flex items-center justify-between rounded-2xl border bg-white px-4 py-3 shadow-sm"
