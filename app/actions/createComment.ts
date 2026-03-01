@@ -4,7 +4,20 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { NotificationType } from "@prisma/client";
+
+type NotificationType =
+  | "FRIEND_REQUEST"
+  | "FRIEND_ACCEPTED"
+  | "POST_REPLY"
+  | "POST_REACTION"
+  | "EVENT_JOINED"
+  | "EVENT_APPROVED"
+  | "EVENT_REJECTED"
+  | "GROUP_JOIN_APPROVED"
+  | "GROUP_JOIN_REJECTED"
+  | "GROUP_CREATE_APPROVED"
+  | "GROUP_CREATE_REJECTED"
+  | "SYSTEM";
 
 async function createNotificationSafe(input: {
   userId: string;
@@ -18,7 +31,7 @@ async function createNotificationSafe(input: {
     await prisma.notification.create({
       data: {
         userId: input.userId,
-        type: input.type,
+        type: input.type as any,
         title: input.title,
         body: input.body ?? null,
         href: input.href ?? null,
@@ -68,12 +81,12 @@ export async function createComment(input: {
   if (post.authorId !== me.id) {
     await createNotificationSafe({
       userId: post.authorId,
-      type: NotificationType.POST_REPLY,
+      type: "POST_REPLY",
       title: "New reply to your post",
       body: input.anonymous
         ? "Someone replied to your post"
         : `${me.name || me.username} replied to your post`,
-      href: `/post/${postId}`, // ✅ exact post
+      href: `/post/${postId}`,
       actorId: input.anonymous ? null : me.id,
     });
 
@@ -83,4 +96,6 @@ export async function createComment(input: {
   revalidatePath("/");
   revalidatePath("/u");
   revalidatePath(`/u/${me.username}`);
+
+  return { ok: true };
 }
