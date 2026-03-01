@@ -10,6 +10,17 @@ import { getDict, type Lang } from "@/lib/i18n";
 
 type SearchParams = { requested?: string };
 
+type GroupListItem = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  _count: {
+    members: number;
+    followers: number;
+  };
+};
+
 const LANG_COOKIE = "kimepish-lang";
 
 export default async function GroupsPage(props: {
@@ -24,10 +35,14 @@ export default async function GroupsPage(props: {
 
   const dict = getDict(lang);
 
-  const groups = await prisma.group.findMany({
+  const groups: GroupListItem[] = await prisma.group.findMany({
     where: { status: "APPROVED" },
     orderBy: { createdAt: "desc" },
-    include: {
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      description: true,
       _count: { select: { members: true, followers: true } },
     },
   });
@@ -38,9 +53,7 @@ export default async function GroupsPage(props: {
 
       <div className="rounded-2xl border bg-white p-4 space-y-2 shadow-sm">
         <div className="font-semibold">{dict["groups.title"]}</div>
-        <div className="text-sm text-gray-600">
-          {dict["groups.subtitle"]}
-        </div>
+        <div className="text-sm text-gray-600">{dict["groups.subtitle"]}</div>
 
         <Link
           href="/groups/request"
@@ -56,20 +69,23 @@ export default async function GroupsPage(props: {
             {dict["groups.noneApproved"]}
           </div>
         ) : (
-          groups.map((g) => (
+          groups.map((g: GroupListItem) => (
             <Link
               key={g.id}
               href={`/g/${g.slug}`}
               className="block rounded-2xl border bg-white p-4 hover:bg-gray-50 transition"
             >
               <div className="font-semibold">{g.name}</div>
+
               {g.description && (
                 <div className="text-sm text-gray-600 mt-1 line-clamp-2">
                   {g.description}
                 </div>
               )}
+
               <div className="text-xs text-gray-500 mt-2">
-                {g._count.members} {dict["groups.members"]} · {g._count.followers} {dict["groups.followers"]}
+                {g._count.members} {dict["groups.members"]} · {g._count.followers}{" "}
+                {dict["groups.followers"]}
               </div>
             </Link>
           ))
