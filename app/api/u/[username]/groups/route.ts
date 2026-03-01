@@ -8,10 +8,24 @@ import { authOptions } from "@/lib/auth";
 
 const TAKE = 12;
 
-function decodeCursor(cursor: string | null): { createdAt: string; id: string } | null {
+type CursorValue = { createdAt: string; id: string } | null;
+
+type GroupRow = {
+  id: string;
+  slug: string;
+  name: string;
+  image: string | null;
+  description: string | null;
+  createdAt: Date;
+  _count: {
+    members: number;
+  };
+};
+
+function decodeCursor(cursor: string | null): CursorValue {
   if (!cursor) return null;
   try {
-    return JSON.parse(Buffer.from(cursor, "base64").toString("utf8"));
+    return JSON.parse(Buffer.from(cursor, "base64").toString("utf8")) as CursorValue;
   } catch {
     return null;
   }
@@ -40,6 +54,7 @@ export async function GET(
 ) {
   const params = await Promise.resolve(ctx.params);
   const username = (params?.username ?? "").trim().toLowerCase();
+
   if (!username) {
     return NextResponse.json({ items: [], nextCursor: null }, { status: 400 });
   }
@@ -61,9 +76,8 @@ export async function GET(
     return NextResponse.json({ items: [], nextCursor: null }, { status: 404 });
   }
 
-  // ✅ Privacy enforcement
   const isMe = !!viewerId && viewerId === owner.id;
-  if (!isMe && owner.groupsVisibility === "FRIENDS_ONLY") {
+  if (!isMe && owner.groupsVisibility === ("FRIENDS_ONLY" as any)) {
     if (!viewerId) {
       return NextResponse.json({ items: [], nextCursor: null }, { status: 403 });
     }
@@ -73,7 +87,7 @@ export async function GET(
     }
   }
 
-  const where: any = {
+  const where: Record<string, unknown> = {
     status: "APPROVED",
     OR: [{ presidentId: owner.id }, { members: { some: { userId: owner.id } } }],
   };
@@ -93,7 +107,7 @@ export async function GET(
   if (cursor?.createdAt && cursor?.id) {
     const cDate = new Date(cursor.createdAt);
     where.AND = [
-      ...(where.AND ?? []),
+      ...(((where.AND as Array<Record<string, unknown>> | undefined) ?? [])),
       {
         OR: [
           { createdAt: { lt: cDate } },
@@ -103,7 +117,7 @@ export async function GET(
     ];
   }
 
-  const groups = await prisma.group.findMany({
+  const groups: GroupRow[] = await prisma.group.findMany({
     where,
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: TAKE,
@@ -119,7 +133,7 @@ export async function GET(
     },
   });
 
-  const items = groups.map((g) => ({
+  const items = groups.map((g: GroupRow) => ({
     id: g.id,
     slug: g.slug,
     name: g.name,
