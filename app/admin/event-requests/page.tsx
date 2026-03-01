@@ -23,6 +23,26 @@ type SearchParams = Promise<{
   status?: "PENDING" | "APPROVED" | "REJECTED";
 }>;
 
+type EventRequestRow = {
+  id: string;
+  title: string;
+  description: string;
+  location: string | null;
+  startsAt: Date;
+  endsAt: Date | null;
+  createdAt: Date;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  imageUrl: string | null;
+  requestedBy: {
+    id: string;
+    username: string;
+    name: string | null;
+    email: string;
+    isOfficial: boolean;
+    isGroupAccount: boolean;
+  };
+};
+
 export default async function AdminEventRequestsPage(props: { searchParams: SearchParams }) {
   const session = await getServerSession(authOptions);
   const userId =
@@ -42,10 +62,10 @@ export default async function AdminEventRequestsPage(props: { searchParams: Sear
   }
 
   const { status } = await props.searchParams;
-  const currentStatus = status ?? "PENDING";
+  const currentStatus: "PENDING" | "APPROVED" | "REJECTED" = status ?? "PENDING";
 
-  const requests = await prisma.eventRequest.findMany({
-    where: { status: currentStatus },
+  const requests: EventRequestRow[] = await prisma.eventRequest.findMany({
+    where: { status: currentStatus as any },
     orderBy: { createdAt: "desc" },
     include: {
       requestedBy: {
@@ -100,7 +120,7 @@ export default async function AdminEventRequestsPage(props: { searchParams: Sear
         </div>
       ) : (
         <div className="space-y-4">
-          {requests.map((r) => (
+          {requests.map((r: EventRequestRow) => (
             <div
               key={r.id}
               className="rounded-2xl border bg-white p-4 shadow-sm space-y-3"
