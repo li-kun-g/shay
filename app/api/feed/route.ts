@@ -9,6 +9,38 @@ import { authOptions } from "@/lib/auth";
 
 type SortKey = "latest" | "top";
 type AnonKey = "all" | "anon" | "non";
+type CursorValue = { createdAt?: string; id?: string; offset?: number } | null;
+
+type ReactionType = "LAUGH" | "SKULL";
+
+type PostRow = {
+  id: string;
+  content: string;
+  anonymous: boolean;
+  category: string;
+  imageUrl: string | null;
+  createdAt: Date;
+  author: {
+    id: string;
+    username: string;
+    name: string | null;
+    image: string | null;
+    emoji: string;
+    college: string;
+  };
+  likes: Array<{ userId: string }>;
+  postReactions: Array<{ userId: string; type: ReactionType }>;
+  _count: {
+    likes: number;
+    comments: number;
+  };
+};
+
+type ReactionAggRow = {
+  postId: string;
+  type: ReactionType;
+  _count: { _all: number };
+};
 
 function parseSort(v: string | null): SortKey {
   return v === "top" ? "top" : "latest";
@@ -19,16 +51,16 @@ function parseAnon(v: string | null): AnonKey {
   return "all";
 }
 
-function decodeCursor(cursor: string | null): any | null {
+function decodeCursor(cursor: string | null): CursorValue {
   if (!cursor) return null;
   try {
-    return JSON.parse(Buffer.from(cursor, "base64").toString("utf8"));
+    return JSON.parse(Buffer.from(cursor, "base64").toString("utf8")) as CursorValue;
   } catch {
     return null;
   }
 }
 
-function encodeCursor(obj: any) {
+function encodeCursor(obj: { createdAt?: string; id?: string; offset?: number }) {
   return Buffer.from(JSON.stringify(obj), "utf8").toString("base64");
 }
 
@@ -51,18 +83,16 @@ export async function GET(req: Request) {
   const myId =
     session?.user && "id" in session.user ? (session.user.id as string) : null;
 
-  // filters
-  let where: any = {};
+  let where: Record<string, unknown> = {};
   if (cat) where.category = cat;
   if (anon === "anon") where.anonymous = true;
   if (anon === "non") where.anonymous = false;
 
-  let orderBy: any[] = [];
+  let orderBy: Array<Record<string, unknown>> = [];
   let skip = 0;
 
-  // Cursor pagination for latest, offset for top
   if (sort === "latest") {
-    orderBy = [{ createdAt: "desc" as const }, { id: "desc" as const }];
+    orderBy = [{ createdAt: "desc" }, { id: "desc" }];
 
     if (cursor?.createdAt && cursor?.id) {
       const cDate = new Date(cursor.createdAt);
@@ -79,18 +109,17 @@ export async function GET(req: Request) {
       };
     }
   } else {
-    // top
     orderBy = [
-      { likes: { _count: "desc" as const } },
-      { createdAt: "desc" as const },
-      { id: "desc" as const },
+      { likes: { _count: "desc" } },
+      { createdAt: "desc" },
+      { id: "desc" },
     ];
 
     const offset = typeof cursor?.offset === "number" ? cursor.offset : 0;
     skip = offset;
   }
 
-  const posts = await prisma.post.findMany({
+  const posts: PostRow[] = await prisma.post.findMany({
     where: Object.keys(where).length ? where : undefined,
     orderBy,
     take: TAKE,
@@ -106,25 +135,19 @@ export async function GET(req: Request) {
           college: true,
         },
       },
-
-      // only my like (0/1)
       likes: myId
         ? { where: { userId: myId }, select: { userId: true } }
         : { where: { userId: "__nope__" }, select: { userId: true } },
-
-      // only my reactions (can be both)
       postReactions: myId
         ? { where: { userId: myId }, select: { userId: true, type: true } }
         : { where: { userId: "__nope__" }, select: { userId: true, type: true } },
-
       _count: { select: { likes: true, comments: true } },
     },
   });
 
-  // ✅ Reaction totals for all posts in this page
-  const postIds = posts.map((p) => p.id);
+  const postIds = posts.map((p: PostRow) => p.id);
 
-  const reactionAgg =
+  const reactionAggRaw =
     postIds.length > 0
       ? await prisma.postReaction.groupBy({
           by: ["postId", "type"],
@@ -132,6 +155,8 @@ export async function GET(req: Request) {
           _count: { _all: true },
         })
       : [];
+
+  const reactionAgg = reactionAggRaw as ReactionAggRow[];
 
   const reactionMap = new Map<string, { LAUGH: number; SKULL: number }>();
   for (const r of reactionAgg) {
@@ -141,7 +166,7 @@ export async function GET(req: Request) {
     reactionMap.set(r.postId, current);
   }
 
-  const items = posts.map((p) => {
+  const items = posts.map((p: PostRow) => {
     const rc = reactionMap.get(p.id) ?? { LAUGH: 0, SKULL: 0 };
 
     return {
@@ -149,10 +174,7 @@ export async function GET(req: Request) {
       reactionCounts: rc,
       laughCount: rc.LAUGH,
       skullCount: rc.SKULL,
-      createdAt:
-        (p as any).createdAt instanceof Date
-          ? (p as any).createdAt.toISOString()
-          : (p as any).createdAt,
+      createdAt: p.createdAt.toISOString(),
     };
   });
 
@@ -162,7 +184,7 @@ export async function GET(req: Request) {
 
     if (sort === "latest") {
       nextCursor = encodeCursor({
-        createdAt: (last as any).createdAt.toISOString(),
+        createdAt: last.createdAt.toISOString(),
         id: last.id,
       });
     } else {
