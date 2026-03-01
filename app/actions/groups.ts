@@ -3,10 +3,24 @@
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import type { GroupRole } from "@prisma/client";
-import { NotificationType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { createNotification } from "@/lib/notifications";
+
+type GroupRole = "PRESIDENT" | "ADMIN" | "MEMBER";
+type GroupVisibility = "PUBLIC" | "PRIVATE";
+type NotificationType =
+  | "FRIEND_REQUEST"
+  | "FRIEND_ACCEPTED"
+  | "POST_REPLY"
+  | "POST_REACTION"
+  | "EVENT_JOINED"
+  | "EVENT_APPROVED"
+  | "EVENT_REJECTED"
+  | "GROUP_JOIN_APPROVED"
+  | "GROUP_JOIN_REJECTED"
+  | "GROUP_CREATE_APPROVED"
+  | "GROUP_CREATE_REJECTED"
+  | "SYSTEM";
 
 /* -------------------------------------------------------------------------- */
 /* Auth + role guards                                                         */
@@ -45,11 +59,11 @@ async function requireGroupRole(groupId: string, allowed: GroupRole[]) {
     select: { role: true },
   });
 
-  if (!me || !allowed.includes(me.role)) {
+  if (!me || !allowed.includes(me.role as GroupRole)) {
     throw new Error("Not authorized");
   }
 
-  return { meId, role: me.role };
+  return { meId, role: me.role as GroupRole };
 }
 
 async function requirePresident(groupId: string) {
@@ -99,13 +113,14 @@ export async function createGroupAction(formData: FormData) {
   const descriptionRaw = String(formData.get("description") ?? "").trim();
   const visibilityRaw = String(formData.get("visibility") ?? "PUBLIC")
     .trim()
-    .toUpperCase();
+    .toUpperCase() as GroupVisibility;
 
   if (!name) throw new Error("Group name is required");
   if (name.length > 60) throw new Error("Group name is too long");
 
   const description = descriptionRaw ? descriptionRaw.slice(0, 200) : null;
-  const visibility = visibilityRaw === "PRIVATE" ? "PRIVATE" : "PUBLIC";
+  const visibility: GroupVisibility =
+    visibilityRaw === "PRIVATE" ? "PRIVATE" : "PUBLIC";
   const slug = await generateUniqueGroupSlug(name);
 
   const group = await prisma.$transaction(async (tx) => {
@@ -114,8 +129,9 @@ export async function createGroupAction(formData: FormData) {
         name,
         slug,
         description,
-        visibility,
-        status: "APPROVED",
+        visibility: visibility as any,
+        status: "APPROVED" as any,
+        presidentId: meId,
       } as any,
       select: {
         id: true,
@@ -127,7 +143,7 @@ export async function createGroupAction(formData: FormData) {
       data: {
         groupId: created.id,
         userId: meId,
-        role: "PRESIDENT",
+        role: "PRESIDENT" as any,
       },
     });
 
@@ -155,7 +171,7 @@ export async function adminApproveGroupRequest(groupId: string) {
       name: true,
       status: true,
       members: {
-        where: { role: "PRESIDENT" },
+        where: { role: "PRESIDENT" as any },
         select: { userId: true },
         take: 1,
       },
@@ -167,7 +183,7 @@ export async function adminApproveGroupRequest(groupId: string) {
   await prisma.group.update({
     where: { id: group.id },
     data: {
-      status: "APPROVED",
+      status: "APPROVED" as any,
       updatedAt: new Date(),
     } as any,
   });
@@ -177,7 +193,7 @@ export async function adminApproveGroupRequest(groupId: string) {
   if (presidentUserId) {
     await createNotification({
       userId: presidentUserId,
-      type: NotificationType.GROUP_JOIN_APPROVED,
+      type: "GROUP_CREATE_APPROVED" as NotificationType,
       title: "Group approved",
       body: `${group.name} was approved`,
       href: `/g/${group.slug}`,
@@ -202,7 +218,7 @@ export async function adminRejectGroupRequest(groupId: string, note?: string) {
       slug: true,
       name: true,
       members: {
-        where: { role: "PRESIDENT" },
+        where: { role: "PRESIDENT" as any },
         select: { userId: true },
         take: 1,
       },
@@ -216,7 +232,7 @@ export async function adminRejectGroupRequest(groupId: string, note?: string) {
   await prisma.group.update({
     where: { id: group.id },
     data: {
-      status: "REJECTED",
+      status: "REJECTED" as any,
       updatedAt: new Date(),
       ...(cleanNote ? { adminNote: cleanNote } : {}),
     } as any,
@@ -227,7 +243,7 @@ export async function adminRejectGroupRequest(groupId: string, note?: string) {
   if (presidentUserId) {
     await createNotification({
       userId: presidentUserId,
-      type: NotificationType.GROUP_JOIN_REJECTED,
+      type: "GROUP_CREATE_REJECTED" as NotificationType,
       title: "Group rejected",
       body: cleanNote
         ? `${group.name} was rejected. Reason: ${cleanNote}`
@@ -309,11 +325,13 @@ async function setMemberRoleInternal(input: {
     select: { role: true },
   });
   if (!target) throw new Error("Member not found");
-  if (target.role === "PRESIDENT") throw new Error("Cannot change president role");
+  if ((target.role as GroupRole) === "PRESIDENT") {
+    throw new Error("Cannot change president role");
+  }
 
   await prisma.groupMember.update({
     where: { groupId_userId: { groupId, userId } },
-    data: { role: role as GroupRole },
+    data: { role: role as any },
   });
 
   return { ok: true };
@@ -330,7 +348,9 @@ async function removeMemberInternal(input: { groupId: string; userId: string }) 
     select: { role: true },
   });
   if (!target) return { ok: true };
-  if (target.role === "PRESIDENT") throw new Error("Cannot remove president");
+  if ((target.role as GroupRole) === "PRESIDENT") {
+    throw new Error("Cannot remove president");
+  }
 
   await prisma.groupMember.delete({
     where: { groupId_userId: { groupId, userId } },
@@ -412,8 +432,8 @@ export async function requestJoinGroup(groupId: string) {
 
   await prisma.groupJoinRequest.upsert({
     where: { groupId_userId: { groupId, userId: meId } },
-    update: { status: "PENDING" },
-    create: { groupId, userId: meId, status: "PENDING" },
+    update: { status: "PENDING" as any },
+    create: { groupId, userId: meId, status: "PENDING" as any },
   });
 
   revalidatePath(`/g/${group.slug}`);
@@ -441,7 +461,7 @@ export async function approveJoinRequest(arg1: string, arg2?: string) {
   });
 
   if (!req) throw new Error("Join request not found");
-  if (req.status !== "PENDING") return { ok: true };
+  if (req.status !== ("PENDING" as any)) return { ok: true };
 
   await requirePresidentOrAdmin(req.groupId);
 
@@ -449,17 +469,17 @@ export async function approveJoinRequest(arg1: string, arg2?: string) {
     prisma.groupMember.upsert({
       where: { groupId_userId: { groupId: req.groupId, userId: req.userId } },
       update: {},
-      create: { groupId: req.groupId, userId: req.userId, role: "MEMBER" },
+      create: { groupId: req.groupId, userId: req.userId, role: "MEMBER" as any },
     }),
     prisma.groupJoinRequest.update({
       where: { id: req.id },
-      data: { status: "APPROVED" },
+      data: { status: "APPROVED" as any },
     }),
   ]);
 
   await createNotification({
     userId: req.userId,
-    type: NotificationType.GROUP_JOIN_APPROVED,
+    type: "GROUP_JOIN_APPROVED" as NotificationType,
     title: "Group request approved",
     body: `You were approved to join ${req.group.name}`,
     href: `/g/${req.group.slug}?tab=members`,
@@ -492,18 +512,18 @@ export async function rejectJoinRequest(arg1: string, arg2?: string) {
   });
 
   if (!req) throw new Error("Join request not found");
-  if (req.status !== "PENDING") return { ok: true };
+  if (req.status !== ("PENDING" as any)) return { ok: true };
 
   await requirePresidentOrAdmin(req.groupId);
 
   await prisma.groupJoinRequest.update({
     where: { id: req.id },
-    data: { status: "REJECTED" },
+    data: { status: "REJECTED" as any },
   });
 
   await createNotification({
     userId: req.userId,
-    type: NotificationType.GROUP_JOIN_REJECTED,
+    type: "GROUP_JOIN_REJECTED" as NotificationType,
     title: "Group request rejected",
     body: `Your request to join ${req.group.name} was rejected`,
     href: `/g/${req.group.slug}`,
@@ -540,13 +560,15 @@ export async function createGroupEventAction(data: {
     where: { id: data.groupId },
     select: { id: true, status: true },
   });
-  if (!group || group.status !== "APPROVED") throw new Error("Group not found");
+  if (!group || group.status !== ("APPROVED" as any)) {
+    throw new Error("Group not found");
+  }
 
   const meRole = await prisma.groupMember.findFirst({
     where: { groupId: data.groupId, userId: meId },
     select: { role: true },
   });
-  if (!meRole || (meRole.role !== "PRESIDENT" && meRole.role !== "ADMIN")) {
+  if (!meRole || !["PRESIDENT", "ADMIN"].includes(meRole.role as string)) {
     throw new Error("Not authorized");
   }
 
@@ -594,13 +616,15 @@ export async function createGroupEvent(data: {
     where: { id: data.groupId },
     select: { id: true, status: true },
   });
-  if (!group || group.status !== "APPROVED") throw new Error("Group not found");
+  if (!group || group.status !== ("APPROVED" as any)) {
+    throw new Error("Group not found");
+  }
 
   const me = await prisma.groupMember.findFirst({
     where: { groupId: group.id, userId: meId },
     select: { role: true },
   });
-  if (!me || (me.role !== "PRESIDENT" && me.role !== "ADMIN")) {
+  if (!me || !["PRESIDENT", "ADMIN"].includes(me.role as string)) {
     throw new Error("Not authorized");
   }
 
