@@ -7,16 +7,50 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-function decodeCursor(cursor: string | null): any | null {
+type CursorValue = { createdAt: string; id: string } | null;
+type ReactionType = "LAUGH" | "SKULL";
+
+type PostRow = {
+  id: string;
+  content: string;
+  anonymous: boolean;
+  category: string;
+  imageUrl: string | null;
+  imageKey?: string | null;
+  createdAt: Date;
+  authorId: string;
+  author: {
+    id: string;
+    username: string;
+    name: string | null;
+    image: string | null;
+    emoji: string;
+    college: string;
+  };
+  likes: Array<{ userId: string }>;
+  postReactions: Array<{ userId: string; type: ReactionType }>;
+  _count: {
+    likes: number;
+    comments: number;
+  };
+};
+
+type ReactionAggRow = {
+  postId: string;
+  type: ReactionType;
+  _count: { _all: number };
+};
+
+function decodeCursor(cursor: string | null): CursorValue {
   if (!cursor) return null;
   try {
-    return JSON.parse(Buffer.from(cursor, "base64").toString("utf8"));
+    return JSON.parse(Buffer.from(cursor, "base64").toString("utf8")) as CursorValue;
   } catch {
     return null;
   }
 }
 
-function encodeCursor(obj: any) {
+function encodeCursor(obj: { createdAt: string; id: string }) {
   return Buffer.from(JSON.stringify(obj), "utf8").toString("base64");
 }
 
@@ -31,7 +65,9 @@ export async function GET(
 
   const p = await Promise.resolve(ctx.params);
   const username = (p?.username ?? "").trim().toLowerCase();
-  if (!username) return NextResponse.json({ items: [], nextCursor: null });
+  if (!username) {
+    return NextResponse.json({ items: [], nextCursor: null });
+  }
 
   const session = await getServerSession(authOptions);
   const myId =
@@ -41,12 +77,17 @@ export async function GET(
     where: { username },
     select: { id: true },
   });
-  if (!user) return NextResponse.json({ items: [], nextCursor: null });
 
-  // ✅ IMPORTANT: hide anonymous posts on profile pages
-  let where: any = { authorId: user.id, anonymous: false };
+  if (!user) {
+    return NextResponse.json({ items: [], nextCursor: null });
+  }
 
-  const orderBy = [{ createdAt: "desc" as const }, { id: "desc" as const }];
+  let where: Record<string, unknown> = { authorId: user.id, anonymous: false };
+
+  const orderBy: Array<Record<string, unknown>> = [
+    { createdAt: "desc" },
+    { id: "desc" },
+  ];
 
   if (cursor?.createdAt && cursor?.id) {
     const cDate = new Date(cursor.createdAt);
@@ -63,7 +104,7 @@ export async function GET(
     };
   }
 
-  const posts = await prisma.post.findMany({
+  const posts: PostRow[] = await prisma.post.findMany({
     where,
     orderBy,
     take: TAKE,
@@ -78,28 +119,22 @@ export async function GET(
           college: true,
         },
       },
-
-      // only my like (0/1) — keeps Shaipost happy and stays fast
       likes: myId
         ? { where: { userId: myId }, select: { userId: true } }
         : { where: { userId: "__nope__" }, select: { userId: true } },
-
-      // only my reactions (for active button state)
       postReactions: myId
         ? { where: { userId: myId }, select: { userId: true, type: true } }
         : {
             where: { userId: "__nope__" },
             select: { userId: true, type: true },
           },
-
       _count: { select: { likes: true, comments: true } },
     },
   });
 
-  // ✅ Global reaction totals for each post (so profile page counts update correctly)
-  const postIds = posts.map((p) => p.id);
+  const postIds = posts.map((p: PostRow) => p.id);
 
-  const groupedReactions =
+  const groupedReactionsRaw =
     postIds.length > 0
       ? await prisma.postReaction.groupBy({
           by: ["postId", "type"],
@@ -107,6 +142,8 @@ export async function GET(
           _count: { _all: true },
         })
       : [];
+
+  const groupedReactions = groupedReactionsRaw as ReactionAggRow[];
 
   const reactionCountsMap = new Map<string, { LAUGH: number; SKULL: number }>();
   for (const row of groupedReactions) {
@@ -116,24 +153,15 @@ export async function GET(
     reactionCountsMap.set(row.postId, current);
   }
 
-  const items = posts.map((p) => {
+  const items = posts.map((p: PostRow) => {
     const rc = reactionCountsMap.get(p.id) ?? { LAUGH: 0, SKULL: 0 };
 
     return {
       ...p,
-      // ✅ fields Shaipost can use for exact counts
       reactionCounts: rc,
       laughCount: rc.LAUGH,
       skullCount: rc.SKULL,
-
-      createdAt:
-        (p as any).createdAt instanceof Date
-          ? (p as any).createdAt.toISOString()
-          : (p as any).createdAt,
-      updatedAt:
-        (p as any).updatedAt instanceof Date
-          ? (p as any).updatedAt.toISOString()
-          : (p as any).updatedAt,
+      createdAt: p.createdAt.toISOString(),
     };
   });
 
@@ -141,7 +169,7 @@ export async function GET(
   if (posts.length === TAKE) {
     const last = posts[posts.length - 1];
     nextCursor = encodeCursor({
-      createdAt: (last as any).createdAt.toISOString(),
+      createdAt: last.createdAt.toISOString(),
       id: last.id,
     });
   }
