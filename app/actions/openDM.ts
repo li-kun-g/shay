@@ -1,22 +1,13 @@
-// app/actions/openDm.ts
 "use server";
 
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { ConversationType } from "@prisma/client";
+
+type ConversationType = "DIRECT" | "GROUP";
 
 function pickDmType(): ConversationType {
-  const values = Object.values(ConversationType) as string[];
-
-  const match =
-    values.find((v) => v.toLowerCase() === "dm") ??
-    values.find((v) => v.toLowerCase().includes("direct")) ??
-    values.find((v) => v.toLowerCase().includes("private")) ??
-    values.find((v) => v.toLowerCase().includes("one")) ??
-    values[0];
-
-  return match as ConversationType;
+  return "DIRECT";
 }
 
 const DM_TYPE = pickDmType();
@@ -52,7 +43,6 @@ export async function openDm(toUsername: string) {
   if (!other) throw new Error("USER_NOT_FOUND");
   if (other.id === myId) throw new Error("CANNOT_DM_SELF");
 
-  // ✅ DM privacy enforcement
   if (other.dmPrivacy === "FRIENDS_ONLY") {
     const ok = await areFriends(myId, other.id);
     if (!ok) throw new Error("DM_FRIENDS_ONLY");
@@ -60,7 +50,7 @@ export async function openDm(toUsername: string) {
 
   const existing = await prisma.conversation.findFirst({
     where: {
-      type: DM_TYPE,
+      type: DM_TYPE as any,
       members: { some: { userId: myId } },
       AND: [{ members: { some: { userId: other.id } } }],
     },
@@ -72,7 +62,7 @@ export async function openDm(toUsername: string) {
 
   const convo = await prisma.conversation.create({
     data: {
-      type: DM_TYPE,
+      type: DM_TYPE as any,
       members: {
         create: [{ userId: myId }, { userId: other.id }],
       },
