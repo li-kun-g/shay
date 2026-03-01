@@ -8,10 +8,31 @@ import { authOptions } from "@/lib/auth";
 
 const TAKE = 12;
 
-function decodeCursor(cursor: string | null): { createdAt: string; id: string } | null {
+type CursorValue = { createdAt: string; id: string } | null;
+
+type FriendUser = {
+  id: string;
+  username: string;
+  name: string | null;
+  image: string | null;
+  emoji: string;
+  major: string | null;
+  college: string;
+};
+
+type FriendshipRow = {
+  id: string;
+  createdAt: Date;
+  userAId: string;
+  userBId: string;
+  userA: FriendUser;
+  userB: FriendUser;
+};
+
+function decodeCursor(cursor: string | null): CursorValue {
   if (!cursor) return null;
   try {
-    return JSON.parse(Buffer.from(cursor, "base64").toString("utf8"));
+    return JSON.parse(Buffer.from(cursor, "base64").toString("utf8")) as CursorValue;
   } catch {
     return null;
   }
@@ -40,6 +61,7 @@ export async function GET(
 ) {
   const params = await Promise.resolve(ctx.params);
   const username = (params?.username ?? "").trim().toLowerCase();
+
   if (!username) {
     return NextResponse.json({ items: [], nextCursor: null }, { status: 400 });
   }
@@ -61,9 +83,8 @@ export async function GET(
     return NextResponse.json({ items: [], nextCursor: null }, { status: 404 });
   }
 
-  // ✅ Privacy enforcement
   const isMe = !!viewerId && viewerId === owner.id;
-  if (!isMe && owner.friendsListVisibility === "FRIENDS_ONLY") {
+  if (!isMe && owner.friendsListVisibility === ("FRIENDS_ONLY" as any)) {
     if (!viewerId) {
       return NextResponse.json({ items: [], nextCursor: null }, { status: 403 });
     }
@@ -82,7 +103,7 @@ export async function GET(
       }
     : null;
 
-  const where: any = {
+  const where: Record<string, unknown> = {
     OR: qFilter
       ? [
           { userAId: owner.id, userB: qFilter },
@@ -103,7 +124,7 @@ export async function GET(
     ];
   }
 
-  const rows = await prisma.friendship.findMany({
+  const rows: FriendshipRow[] = await prisma.friendship.findMany({
     where,
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: TAKE,
@@ -133,7 +154,9 @@ export async function GET(
     },
   });
 
-  const items = rows.map((f) => (f.userAId === owner.id ? f.userB : f.userA));
+  const items = rows.map((f: FriendshipRow) =>
+    f.userAId === owner.id ? f.userB : f.userA
+  );
 
   let nextCursor: string | null = null;
   if (rows.length === TAKE) {
