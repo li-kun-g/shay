@@ -18,6 +18,50 @@ import { getDict, type Lang } from "@/lib/i18n";
 type Params = { slug: string };
 type SearchParams = { tab?: string; created?: string; sort?: string };
 
+type PendingRequestRow = {
+  id: string;
+  message: string | null;
+  createdAt: Date;
+  user: {
+    id: string;
+    username: string;
+    name: string | null;
+  };
+};
+
+type GroupEventRow = {
+  id: string;
+  title: string;
+  description: string;
+  location: string | null;
+  startsAt: Date;
+  createdAt: Date;
+  imageUrl?: string | null;
+  createdBy: {
+    username: string;
+    name: string | null;
+    image: string | null;
+    emoji: string;
+  };
+  group: {
+    slug: string;
+    image: string | null;
+    name: string;
+  } | null;
+  _count: {
+    attendees: number;
+  };
+  attendees: {
+    user: {
+      id: string;
+      username: string;
+      name: string | null;
+      image: string | null;
+      emoji: string;
+    };
+  }[];
+};
+
 const LANG_COOKIE = "kimepish-lang";
 
 function TabLink({
@@ -129,7 +173,7 @@ export default async function GroupPage(props: {
   const canManageRoles = myRole === "PRESIDENT";
   const canEditGroup = canAdmin;
 
-  const pendingRequests = canAdmin
+  const pendingRequests: PendingRequestRow[] = canAdmin
     ? await prisma.groupJoinRequest.findMany({
         where: { groupId: group.id, status: "PENDING" },
         orderBy: { createdAt: "desc" },
@@ -323,7 +367,7 @@ export default async function GroupPage(props: {
           canViewMembers={canViewMembers}
           isMember={isMember}
           visibility={membersVisibility ?? "PUBLIC"}
-          pendingRequests={pendingRequests.map((r) => ({
+          pendingRequests={pendingRequests.map((r: PendingRequestRow) => ({
             id: r.id,
             message: r.message,
             createdAt: r.createdAt.toISOString(),
@@ -492,7 +536,7 @@ async function GroupEventsList({
         ? [{ createdAt: "desc" as const }]
         : [{ startsAt: "asc" as const }];
 
-  const events = await prisma.event.findMany({
+  const events: GroupEventRow[] = await prisma.event.findMany({
     where: { groupId },
     orderBy,
     take: 50,
@@ -529,16 +573,16 @@ async function GroupEventsList({
     const rows = await prisma.eventAttendance.findMany({
       where: {
         userId: myId,
-        eventId: { in: events.map((e) => e.id) },
+        eventId: { in: events.map((e: GroupEventRow) => e.id) },
       },
       select: { eventId: true },
     });
-    rows.forEach((r) => myGoingSet.add(r.eventId));
+    rows.forEach((r: { eventId: string }) => myGoingSet.add(r.eventId));
   }
 
   return (
     <div className="space-y-3">
-      {events.map((e) => (
+      {events.map((e: GroupEventRow) => (
         <EventCard
           key={e.id}
           event={{
@@ -552,7 +596,7 @@ async function GroupEventsList({
             goingCount: e._count.attendees,
             goingByMe: myGoingSet.has(e.id),
             attendeesPreview: e.attendees.map((a) => a.user),
-            imageUrl: (e as any).imageUrl ?? null,
+            imageUrl: e.imageUrl ?? null,
           }}
         />
       ))}
