@@ -7,28 +7,35 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
+type GroupRequestRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  createdAt: Date;
+  requestedBy: {
+    username: string;
+    name: string | null;
+  };
+};
+
 export default async function AdminGroupsPage() {
   const session = await getServerSession(authOptions);
 
-  if (
-    !session?.user ||
-    !("id" in session.user)
-  ) {
+  if (!session?.user || !("id" in session.user)) {
     redirect("/signin");
   }
 
   const me = await prisma.user.findUnique({
-    where: { id: session.user.id },
+    where: { id: session.user.id as string },
     select: { isOfficial: true },
   });
 
-  // ❌ Only admins allowed
   if (!me?.isOfficial) {
     redirect("/");
   }
 
-  const requests = await prisma.groupCreateRequest.findMany({
-    where: { status: "PENDING" },
+  const requests: GroupRequestRow[] = await prisma.groupCreateRequest.findMany({
+    where: { status: "PENDING" as any },
     orderBy: { createdAt: "asc" },
     include: {
       requestedBy: {
@@ -42,12 +49,10 @@ export default async function AdminGroupsPage() {
       <h1 className="text-2xl font-semibold">Group Requests</h1>
 
       {requests.length === 0 ? (
-        <p className="text-sm text-gray-500">
-          No pending requests 🎉
-        </p>
+        <p className="text-sm text-gray-500">No pending requests 🎉</p>
       ) : (
         <div className="space-y-3">
-          {requests.map((r) => (
+          {requests.map((r: GroupRequestRow) => (
             <div
               key={r.id}
               className="rounded-2xl border bg-white p-4 space-y-2"
@@ -58,19 +63,17 @@ export default async function AdminGroupsPage() {
                 @{r.requestedBy.username}
               </div>
 
-              {r.description && (
-                <p className="text-sm">{r.description}</p>
-              )}
+              {r.description && <p className="text-sm">{r.description}</p>}
 
               <div className="flex gap-2 pt-2">
-                <form action={`/admin/groups/approve`} method="POST">
+                <form action="/admin/groups/approve" method="POST">
                   <input type="hidden" name="id" value={r.id} />
                   <button className="rounded-xl bg-black px-4 py-2 text-sm text-white">
                     Approve
                   </button>
                 </form>
 
-                <form action={`/admin/groups/reject`} method="POST">
+                <form action="/admin/groups/reject" method="POST">
                   <input type="hidden" name="id" value={r.id} />
                   <button className="rounded-xl border px-4 py-2 text-sm">
                     Reject
