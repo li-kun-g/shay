@@ -6,10 +6,27 @@ import { prisma } from "@/lib/prisma";
 
 const TAKE = 60;
 
-function decodeCursor(cursor: string | null): { createdAt: string; id: string } | null {
+type CursorValue = { createdAt: string; id: string } | null;
+
+type CommentRow = {
+  id: string;
+  content: string;
+  anonymous: boolean;
+  createdAt: Date;
+  authorId: string;
+  author: {
+    id: string;
+    username: string;
+    name: string | null;
+    image: string | null;
+    emoji: string;
+  };
+};
+
+function decodeCursor(cursor: string | null): CursorValue {
   if (!cursor) return null;
   try {
-    return JSON.parse(Buffer.from(cursor, "base64").toString("utf8"));
+    return JSON.parse(Buffer.from(cursor, "base64").toString("utf8")) as CursorValue;
   } catch {
     return null;
   }
@@ -33,8 +50,11 @@ export async function GET(
   const { searchParams } = new URL(req.url);
   const cursor = decodeCursor(searchParams.get("cursor"));
 
-  let where: any = { postId };
-  const orderBy = [{ createdAt: "desc" as const }, { id: "desc" as const }];
+  let where: Record<string, unknown> = { postId };
+  const orderBy: Array<Record<string, unknown>> = [
+    { createdAt: "desc" },
+    { id: "desc" },
+  ];
 
   if (cursor?.createdAt && cursor?.id) {
     const cDate = new Date(cursor.createdAt);
@@ -51,7 +71,7 @@ export async function GET(
     };
   }
 
-  const rows = await prisma.comment.findMany({
+  const rows: CommentRow[] = await prisma.comment.findMany({
     where,
     orderBy,
     take: TAKE,
@@ -59,7 +79,7 @@ export async function GET(
       author: {
         select: {
           id: true,
-          username: true, // ✅ IMPORTANT
+          username: true,
           name: true,
           image: true,
           emoji: true,
@@ -68,20 +88,18 @@ export async function GET(
     },
   });
 
-  // Return oldest->newest for nice reading inside each page chunk
   const items = rows
     .slice()
     .reverse()
-    .map((c) => ({
+    .map((c: CommentRow) => ({
       id: c.id,
       content: c.content,
       anonymous: c.anonymous,
-      createdAt:
-        c.createdAt instanceof Date ? c.createdAt.toISOString() : (c.createdAt as any),
+      createdAt: c.createdAt.toISOString(),
       authorId: c.authorId,
       author: {
         id: c.author.id,
-        username: c.author.username, // ✅ IMPORTANT
+        username: c.author.username,
         name: c.author.name,
         image: c.author.image,
         emoji: c.author.emoji,
@@ -90,7 +108,7 @@ export async function GET(
 
   let nextCursor: string | null = null;
   if (rows.length === TAKE) {
-    const last = rows[rows.length - 1]; // oldest row in this DESC page
+    const last = rows[rows.length - 1];
     nextCursor = encodeCursor({
       createdAt: last.createdAt.toISOString(),
       id: last.id,
