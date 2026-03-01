@@ -10,6 +10,33 @@ import { notFound, redirect } from "next/navigation";
 
 type Params = { id: string };
 
+type ConversationMemberItem = {
+  userId: string;
+  user: {
+    username: string;
+    name: string | null;
+  };
+};
+
+type ConversationMessageItem = {
+  id: string;
+  text: string;
+  createdAt: Date;
+  author: {
+    id: string;
+    username: string;
+  };
+};
+
+type ConversationPageData = {
+  id: string;
+  type: "DIRECT" | "GROUP";
+  name: string | null;
+  dmKey: string | null;
+  members: ConversationMemberItem[];
+  messages: ConversationMessageItem[];
+};
+
 function isSupportConversation(convo: { dmKey: string | null }) {
   return typeof convo?.dmKey === "string" && convo.dmKey.startsWith("support:");
 }
@@ -26,7 +53,7 @@ export default async function ThreadPage(props: {
 
   const myId = session.user.id as string;
 
-  const convo = await prisma.conversation.findUnique({
+  const convo = (await prisma.conversation.findUnique({
     where: { id },
     include: {
       members: {
@@ -41,14 +68,13 @@ export default async function ThreadPage(props: {
         include: { author: { select: { id: true, username: true } } },
       },
     },
-  });
+  })) as ConversationPageData | null;
 
   if (!convo) notFound();
 
-  const isMember = convo.members.some((m) => m.userId === myId);
+  const isMember = convo.members.some((m: ConversationMemberItem) => m.userId === myId);
   if (!isMember) notFound();
 
-  // ✅ mark this conversation as read when opened
   await prisma.conversationMember.updateMany({
     where: {
       conversationId: convo.id,
@@ -65,7 +91,7 @@ export default async function ThreadPage(props: {
     ? "Administration"
     : convo.type === "GROUP"
       ? convo.name ?? "Group"
-      : `@${convo.members.find((m) => m.userId !== myId)?.user.username ?? "unknown"}`;
+      : `@${convo.members.find((m: ConversationMemberItem) => m.userId !== myId)?.user.username ?? "unknown"}`;
 
   const hasMessages = convo.messages.length > 0;
 
@@ -76,7 +102,7 @@ export default async function ThreadPage(props: {
 
         {!support && convo.type === "GROUP" && (
           <div className="text-xs text-gray-500 mt-1">
-            Members: {convo.members.map((m) => `@${m.user.username}`).join(", ")}
+            Members: {convo.members.map((m: ConversationMemberItem) => `@${m.user.username}`).join(", ")}
           </div>
         )}
 
@@ -95,7 +121,7 @@ export default async function ThreadPage(props: {
         </div>
       ) : (
         <div className="rounded-2xl border bg-white p-4 space-y-2 shadow-sm dark:bg-[var(--surface)]">
-          {convo.messages.map((m) => {
+          {convo.messages.map((m: ConversationMessageItem) => {
             const mine = m.author?.id === myId;
 
             const label = support
