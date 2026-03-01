@@ -13,7 +13,9 @@ function StatusBadge({ status }: { status: "PENDING" | "APPROVED" | "REJECTED" }
       : "bg-red-100 text-red-800 border-red-200";
 
   return (
-    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${styles}`}>
+    <span
+      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${styles}`}
+    >
       {status}
     </span>
   );
@@ -43,7 +45,9 @@ type EventRequestRow = {
   };
 };
 
-export default async function AdminEventRequestsPage(props: { searchParams: SearchParams }) {
+export default async function AdminEventRequestsPage(props: {
+  searchParams: SearchParams;
+}) {
   const session = await getServerSession(authOptions);
   const userId =
     session?.user && "id" in session.user ? (session.user.id as string) : null;
