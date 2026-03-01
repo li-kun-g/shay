@@ -4,7 +4,20 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { NotificationType } from "@prisma/client";
+
+type NotificationType =
+  | "FRIEND_REQUEST"
+  | "FRIEND_ACCEPTED"
+  | "POST_REPLY"
+  | "POST_REACTION"
+  | "EVENT_JOINED"
+  | "EVENT_APPROVED"
+  | "EVENT_REJECTED"
+  | "GROUP_JOIN_APPROVED"
+  | "GROUP_JOIN_REJECTED"
+  | "GROUP_CREATE_APPROVED"
+  | "GROUP_CREATE_REJECTED"
+  | "SYSTEM";
 
 async function createNotificationSafe(input: {
   userId: string;
@@ -18,7 +31,7 @@ async function createNotificationSafe(input: {
     await prisma.notification.create({
       data: {
         userId: input.userId,
-        type: input.type,
+        type: input.type as any,
         title: input.title,
         body: input.body ?? null,
         href: input.href ?? null,
@@ -66,10 +79,10 @@ export async function toggleLike(postIdRaw: string) {
     if (post.authorId !== user.id) {
       await createNotificationSafe({
         userId: post.authorId,
-        type: NotificationType.POST_REACTION,
+        type: "POST_REACTION",
         title: "New like on your post",
         body: `${user.name || user.username} liked your post ☕`,
-        href: `/post/${postId}`, // ✅ exact post
+        href: `/post/${postId}`,
         actorId: user.id,
       });
 
@@ -80,4 +93,6 @@ export async function toggleLike(postIdRaw: string) {
   revalidatePath("/");
   revalidatePath("/u");
   revalidatePath(`/u/${user.username}`);
+
+  return { ok: true };
 }
