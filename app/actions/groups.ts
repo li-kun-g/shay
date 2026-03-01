@@ -123,7 +123,13 @@ export async function createGroupAction(formData: FormData) {
     visibilityRaw === "PRIVATE" ? "PRIVATE" : "PUBLIC";
   const slug = await generateUniqueGroupSlug(name);
 
-  const group = await prisma.$transaction(async (tx) => {
+const group = await prisma.$transaction(
+  async (
+    tx: {
+      group: typeof prisma.group;
+      groupMember: typeof prisma.groupMember;
+    }
+  ) => {
     const created = await tx.group.create({
       data: {
         name,
