@@ -81,8 +81,7 @@ export default async function AdminEventRequestsPage(props: { searchParams: Sear
     },
   });
 
-  const tabBase =
-    "rounded-xl border px-3 py-2 text-sm font-medium transition";
+  const tabBase = "rounded-xl border px-3 py-2 text-sm font-medium transition";
   const activeTab = "bg-black text-white border-black";
   const inactiveTab = "bg-white text-gray-700 hover:bg-gray-50";
 
@@ -158,7 +157,12 @@ export default async function AdminEventRequestsPage(props: { searchParams: Sear
 
               {r.status === "PENDING" ? (
                 <div className="flex gap-2 pt-2">
-                  <form action={approveEventRequest.bind(null, r.id)}>
+                  <form
+                    action={async () => {
+                      "use server";
+                      await approveEventRequest(r.id);
+                    }}
+                  >
                     <button
                       type="submit"
                       className="rounded-xl bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700"
@@ -167,7 +171,12 @@ export default async function AdminEventRequestsPage(props: { searchParams: Sear
                     </button>
                   </form>
 
-                  <form action={rejectEventRequest.bind(null, r.id)}>
+                  <form
+                    action={async () => {
+                      "use server";
+                      await rejectEventRequest(r.id);
+                    }}
+                  >
                     <button
                       type="submit"
                       className="rounded-xl bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
