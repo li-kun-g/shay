@@ -4,12 +4,24 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
+type AttendanceRow = {
+  user: {
+    id: string;
+    username: string;
+    name: string | null;
+    image: string | null;
+    emoji: string;
+  };
+};
+
+type Attendee = AttendanceRow["user"];
+
 export async function getEventAttendees(eventId: string) {
   const session = await getServerSession(authOptions);
   const myId =
     session?.user && "id" in session.user ? (session.user.id as string) : null;
 
-  const rows = await prisma.eventAttendance.findMany({
+  const rows: AttendanceRow[] = await prisma.eventAttendance.findMany({
     where: { eventId },
     orderBy: { createdAt: "desc" },
     include: {
@@ -25,12 +37,10 @@ export async function getEventAttendees(eventId: string) {
     },
   });
 
-  const attendees = rows.map((r) => r.user);
+  const attendees: Attendee[] = rows.map((r: AttendanceRow) => r.user);
 
-  // If not logged in → no friends sort, just return
   if (!myId) return { attendees };
 
-  // Friends of me (Friendship is undirected A/B)
   const friendships = await prisma.friendship.findMany({
     where: {
       OR: [{ userAId: myId }, { userBId: myId }],
@@ -43,10 +53,10 @@ export async function getEventAttendees(eventId: string) {
     friendIds.add(f.userAId === myId ? f.userBId : f.userAId);
   }
 
-  attendees.sort((a, b) => {
+  attendees.sort((a: Attendee, b: Attendee) => {
     const af = friendIds.has(a.id) ? 1 : 0;
     const bf = friendIds.has(b.id) ? 1 : 0;
-    if (af !== bf) return bf - af; // friends first
+    if (af !== bf) return bf - af;
     return a.username.localeCompare(b.username);
   });
 
