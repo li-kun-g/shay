@@ -2,9 +2,13 @@
 
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
-import { Prisma } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+
+type TxClient = {
+  event: typeof prisma.event;
+  eventRequest: typeof prisma.eventRequest;
+};
 
 export async function approveEventRequest(requestId: string) {
   const session = await getServerSession(authOptions);
@@ -31,7 +35,7 @@ export async function approveEventRequest(requestId: string) {
     throw new Error("This request has already been processed");
   }
 
-  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+  await prisma.$transaction(async (tx: TxClient) => {
     await tx.event.create({
       data: {
         title: request.title,
