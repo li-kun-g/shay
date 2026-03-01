@@ -4,7 +4,20 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { NotificationType } from "@prisma/client";
+
+type NotificationType =
+  | "FRIEND_REQUEST"
+  | "FRIEND_ACCEPTED"
+  | "POST_REPLY"
+  | "POST_REACTION"
+  | "EVENT_JOINED"
+  | "EVENT_APPROVED"
+  | "EVENT_REJECTED"
+  | "GROUP_JOIN_APPROVED"
+  | "GROUP_JOIN_REJECTED"
+  | "GROUP_CREATE_APPROVED"
+  | "GROUP_CREATE_REJECTED"
+  | "SYSTEM";
 
 async function requireUser() {
   const session = await getServerSession(authOptions);
@@ -25,7 +38,7 @@ export type FriendRelation =
  * Safe notification creator (doesn't break main friend flow if notification fails)
  */
 async function createNotificationSafe(input: {
-  userId: string; // recipient
+  userId: string;
   type: NotificationType;
   title: string;
   body?: string | null;
@@ -36,7 +49,7 @@ async function createNotificationSafe(input: {
     await prisma.notification.create({
       data: {
         userId: input.userId,
-        type: input.type,
+        type: input.type as any,
         title: input.title,
         body: input.body ?? null,
         href: input.href ?? null,
@@ -48,10 +61,6 @@ async function createNotificationSafe(input: {
   }
 }
 
-/**
- * VK-style relation resolver for profile page buttons.
- * Returns which button should be shown, and requestId when applicable.
- */
 export async function getFriendRelation(profileUserId: string) {
   const myId = await requireUser();
   const otherId = (profileUserId ?? "").trim();
@@ -61,7 +70,6 @@ export async function getFriendRelation(profileUserId: string) {
     return { ok: true as const, relation: "self" as FriendRelation };
   }
 
-  // Friends in either direction
   const friendship = await prisma.friendship.findFirst({
     where: {
       OR: [
@@ -76,7 +84,6 @@ export async function getFriendRelation(profileUserId: string) {
     return { ok: true as const, relation: "friends" as FriendRelation };
   }
 
-  // Pending requests both directions
   const [outgoing, incoming] = await Promise.all([
     prisma.friendRequest.findFirst({
       where: { fromId: myId, toId: otherId, status: "PENDING" },
@@ -107,12 +114,6 @@ export async function getFriendRelation(profileUserId: string) {
   return { ok: true as const, relation: "none" as FriendRelation };
 }
 
-/**
- * Send friend request (VK-like):
- * - If there is an incoming pending request from that user, auto-accept.
- * - If already friends, do nothing.
- * - Otherwise create/update outgoing PENDING request.
- */
 export async function sendFriendRequest(toUserId: string) {
   const myId = await requireUser();
   const otherId = (toUserId ?? "").trim();
@@ -132,7 +133,6 @@ export async function sendFriendRequest(toUserId: string) {
 
   if (!me || !other) return;
 
-  // already friends?
   const already = await prisma.friendship.findFirst({
     where: {
       OR: [
@@ -144,7 +144,6 @@ export async function sendFriendRequest(toUserId: string) {
   });
   if (already) return;
 
-  // if they already requested you -> accept it (smooth VK feel)
   const incoming = await prisma.friendRequest.findFirst({
     where: { fromId: otherId, toId: myId, status: "PENDING" },
     select: { id: true, fromId: true, toId: true },
@@ -165,10 +164,9 @@ export async function sendFriendRequest(toUserId: string) {
       }),
     ]);
 
-    // notify original sender that their request was accepted (auto-accept case)
     await createNotificationSafe({
       userId: otherId,
-      type: NotificationType.FRIEND_ACCEPTED,
+      type: "FRIEND_ACCEPTED",
       title: "Friend request accepted",
       body: `${me.name || me.username} accepted your friend request`,
       href: `/u/${me.username}`,
@@ -186,14 +184,13 @@ export async function sendFriendRequest(toUserId: string) {
     where: {
       fromId_toId: { fromId: myId, toId: otherId },
     },
-    update: { status: "PENDING" }, // allow re-send if previously DECLINED
+    update: { status: "PENDING" },
     create: { fromId: myId, toId: otherId, status: "PENDING" },
   });
 
-  // notify receiver about new friend request
   await createNotificationSafe({
     userId: otherId,
-    type: NotificationType.FRIEND_REQUEST,
+    type: "FRIEND_REQUEST",
     title: "New friend request",
     body: `${me.name || me.username} sent you a friend request`,
     href: `/u/${me.username}`,
@@ -206,10 +203,6 @@ export async function sendFriendRequest(toUserId: string) {
   revalidatePath(`/u/${other.username}`);
 }
 
-/**
- * Accept an incoming request.
- * Creates friendship with sorted ids to prevent duplicates regardless of direction.
- */
 export async function acceptFriendRequest(requestId: string) {
   const myId = await requireUser();
   const id = (requestId ?? "").trim();
@@ -250,10 +243,9 @@ export async function acceptFriendRequest(requestId: string) {
     }),
   ]);
 
-  // notify original sender
   await createNotificationSafe({
     userId: req.fromId,
-    type: NotificationType.FRIEND_ACCEPTED,
+    type: "FRIEND_ACCEPTED",
     title: "Friend request accepted",
     body: `${me.name || me.username} accepted your friend request`,
     href: `/u/${me.username}`,
@@ -266,9 +258,6 @@ export async function acceptFriendRequest(requestId: string) {
   revalidatePath(`/u/${sender.username}`);
 }
 
-/**
- * Decline an incoming request.
- */
 export async function declineFriendRequest(requestId: string) {
   const myId = await requireUser();
   const id = (requestId ?? "").trim();
@@ -290,10 +279,6 @@ export async function declineFriendRequest(requestId: string) {
   revalidatePath("/friends");
 }
 
-/**
- * Cancel my outgoing pending request to a user (used for "Request sent" -> "Cancel").
- * We reuse DECLINED status for now. If you want, later add a CANCELED enum.
- */
 export async function cancelFriendRequest(toUserId: string) {
   const myId = await requireUser();
   const otherId = (toUserId ?? "").trim();
@@ -308,9 +293,6 @@ export async function cancelFriendRequest(toUserId: string) {
   revalidatePath("/friends");
 }
 
-/**
- * Remove friendship (either direction).
- */
 export async function removeFriend(friendId: string) {
   const myId = await requireUser();
   const otherId = (friendId ?? "").trim();
