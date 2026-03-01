@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { PostCategory } from "@prisma/client";
+
+type PostCategory = "GOSSIPS" | "UNI" | "CONFESSIONS" | "MARKET" | "OTHER";
 
 export async function createPost(input: {
   content: string;
@@ -23,13 +24,10 @@ export async function createPost(input: {
   const imageUrl = (input.imageUrl ?? null) ? String(input.imageUrl).trim() : null;
   const imageKey = (input.imageKey ?? null) ? String(input.imageKey).trim() : null;
 
-  // must have something
-  if (!content && !imageUrl) return;
+  if (!content && !imageUrl) return { ok: true };
 
-  // enforce max len (matches UI)
   if (content.length > 280) throw new Error("CONTENT_TOO_LONG");
 
-  // ✅ rule: anonymous posts cannot have images
   if (input.anonymous && imageUrl) {
     throw new Error("ANON_CANNOT_HAVE_IMAGE");
   }
@@ -45,7 +43,7 @@ export async function createPost(input: {
     data: {
       content,
       anonymous: input.anonymous,
-      category: input.category,
+      category: input.category as any,
       authorId: me.id,
       imageUrl,
       imageKey,
@@ -53,4 +51,6 @@ export async function createPost(input: {
   });
 
   revalidatePath("/");
+
+  return { ok: true };
 }
