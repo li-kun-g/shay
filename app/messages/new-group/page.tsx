@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { useRouter } from "next/navigation";
 import { getDmSuggestions } from "@/app/actions/getDMSuggestions";
 import { createGroupChat } from "@/app/actions/createGroupChat";
 import { useI18n } from "@/components/LanguageProvider";
@@ -40,6 +41,7 @@ function SubmitButton({
 
 export default function NewGroupPage() {
   const { t } = useI18n();
+  const router = useRouter();
 
   const [groupName, setGroupName] = useState("");
   const [q, setQ] = useState("");
@@ -102,7 +104,7 @@ export default function NewGroupPage() {
     setSelected((prev) => prev.filter((x) => x.username !== username));
   }
 
-  const usernamesCsv = selected.map((u) => u.username).join(",");
+  const memberIds = selected.map((u) => u.id);
   const memberCountLabel = `${selected.length + 1}/150`;
 
   return (
@@ -111,10 +113,13 @@ export default function NewGroupPage() {
 
       <form
         action={async () => {
-          await createGroupChat({
+          const res = await createGroupChat({
             name: groupName,
-            usernames: usernamesCsv,
+            memberIds,
           });
+
+          router.push(`/messages/${res.id}`);
+          router.refresh();
         }}
         className="space-y-3"
       >
