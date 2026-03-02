@@ -3,13 +3,13 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { CampusDuration as PrismaCampusDuration } from "@prisma/client";
 
+type CampusDurationDb = "H2" | "H4" | "EOD";
 type CampusDurationUI = "2h" | "4h" | "eod";
 
-function toUiDuration(d: PrismaCampusDuration | null | undefined): CampusDurationUI {
-  if (d === PrismaCampusDuration.H4) return "4h";
-  if (d === PrismaCampusDuration.EOD) return "eod";
+function toUiDuration(d: CampusDurationDb | null | undefined): CampusDurationUI {
+  if (d === "H4") return "4h";
+  if (d === "EOD") return "eod";
   return "2h"; // default for H2/null/undefined
 }
 
@@ -75,7 +75,9 @@ export const authOptions: NextAuthOptions = {
           kimepId: user.kimepId,
 
           campusStatusVisibility: user.campusStatusVisibility,
-          campusStatusDuration: toUiDuration(user.campusStatusDuration),
+          campusStatusDuration: toUiDuration(
+            (user.campusStatusDuration ?? null) as CampusDurationDb | null
+          ),
         } as any;
       },
     }),
@@ -133,8 +135,9 @@ export const authOptions: NextAuthOptions = {
 
       (session.user as any).campusStatusVisibility =
         dbUser.campusStatusVisibility ?? "EVERYONE";
-      (session.user as any).campusStatusDuration =
-        toUiDuration(dbUser.campusStatusDuration);
+      (session.user as any).campusStatusDuration = toUiDuration(
+        (dbUser.campusStatusDuration ?? null) as CampusDurationDb | null
+      );
 
       return session;
     },
