@@ -8,8 +8,43 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
-function isSupportConversation(c: any) {
-  return typeof c?.dmKey === "string" && c.dmKey.startsWith("support:");
+type ConversationUser = {
+  id: string;
+  username: string;
+  name: string | null;
+  image: string | null;
+  emoji: string | null;
+};
+
+type ConversationMember = {
+  id: string;
+  userId: string;
+  lastReadAt?: Date | null;
+  user: ConversationUser;
+};
+
+type ConversationMessage = {
+  id: string;
+  text: string;
+  createdAt: Date;
+  author: {
+    id: string;
+    username: string;
+  };
+};
+
+type ConversationItem = {
+  id: string;
+  type: "DIRECT" | "GROUP" | string;
+  name: string | null;
+  dmKey: string | null;
+  createdAt: Date;
+  members: ConversationMember[];
+  messages: ConversationMessage[];
+};
+
+function isSupportConversation(c: { dmKey: string | null }) {
+  return typeof c.dmKey === "string" && c.dmKey.startsWith("support:");
 }
 
 export default async function MessagesPage() {
@@ -26,7 +61,7 @@ export default async function MessagesPage() {
   const myUsername = me?.username ?? undefined;
   const isAdmin = me?.isOfficial === true;
 
-  const conversations = await prisma.conversation.findMany({
+  const conversations: ConversationItem[] = await prisma.conversation.findMany({
     where: { members: { some: { userId: myId } } },
     take: 100,
     include: {
@@ -46,28 +81,28 @@ export default async function MessagesPage() {
   });
 
   const visibleConversations = conversations
-    .filter((c) => {
+    .filter((c: ConversationItem) => {
       const support = isSupportConversation(c);
       if (support) return true;
       if (c.type === "GROUP") return true; // show even with 0 messages
       return c.messages.length > 0; // hide empty direct chats
     })
-    .sort((a, b) => {
+    .sort((a: ConversationItem, b: ConversationItem) => {
       const aActivity =
         a.messages[0]?.createdAt?.getTime?.() ??
-        ((a as any).createdAt instanceof Date ? (a as any).createdAt.getTime() : 0);
+        (a.createdAt instanceof Date ? a.createdAt.getTime() : 0);
 
       const bActivity =
         b.messages[0]?.createdAt?.getTime?.() ??
-        ((b as any).createdAt instanceof Date ? (b as any).createdAt.getTime() : 0);
+        (b.createdAt instanceof Date ? b.createdAt.getTime() : 0);
 
       return bActivity - aActivity;
     });
 
   const unreadCounts = await Promise.all(
-    visibleConversations.map(async (c) => {
-      const myMember = c.members.find((m) => m.user.id === myId);
-      const lastReadAt = (myMember as any)?.lastReadAt as Date | null | undefined;
+    visibleConversations.map(async (c: ConversationItem) => {
+      const myMember = c.members.find((m: ConversationMember) => m.user.id === myId);
+      const lastReadAt = myMember?.lastReadAt ?? null;
 
       const unread = await prisma.message.count({
         where: {
@@ -101,15 +136,16 @@ export default async function MessagesPage() {
       </div>
 
       <div className="space-y-2">
-        {visibleConversations.map((c) => {
+        {visibleConversations.map((c: ConversationItem) => {
           const last = c.messages[0];
           const support = isSupportConversation(c);
           const unreadCount = unreadMap.get(c.id) ?? 0;
 
-          const otherMember = c.members.find((m) => m.user.id !== myId);
+          const otherMember = c.members.find((m: ConversationMember) => m.user.id !== myId);
           const otherUsername =
             otherMember?.user?.username ??
-            c.members.find((m) => m.user.username !== myUsername)?.user.username ??
+            c.members.find((m: ConversationMember) => m.user.username !== myUsername)?.user
+              .username ??
             "unknown";
 
           const otherHandle = `@${otherUsername}`;
