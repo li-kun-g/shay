@@ -13,7 +13,6 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import type { Prisma, ProfileVisibility } from "@prisma/client";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { getDict, type Lang } from "@/lib/i18n";
@@ -22,34 +21,38 @@ type Params = { username: string };
 type SP = { tab?: string };
 type CampusStatus = "ON" | "OFF" | null;
 type ProfileTab = "posts" | "friends" | "groups";
+type ProfileVisibility = "EVERYONE" | "FRIENDS_ONLY";
 
-type UserWithProfileStuff = Prisma.UserGetPayload<{
-  select: {
-    id: true;
-    username: true;
-    name: true;
-    image: true;
-    emoji: true;
-    status: true;
-    major: true;
-    college: true;
-    kimepId: true;
-    yearOfStudy: true;
+type UserWithProfileStuff = {
+  id: string;
+  username: string;
+  name: string | null;
+  image: string | null;
+  emoji: string;
+  status: string | null;
+  major: string | null;
+  college: string;
+  kimepId: number | null;
+  yearOfStudy: number | null;
 
-    campusStatus: true;
-    campusStatusUpdatedAt: true;
-    campusStatusExpiresAt: true;
-    campusStatusVisibility: true;
+  campusStatus: "ON" | "OFF" | null;
+  campusStatusUpdatedAt: Date | null;
+  campusStatusExpiresAt: Date | null;
+  campusStatusVisibility: string;
 
-    badges: true;
+  badges: {
+    id: string;
+    name: string;
+    emoji: string;
+    userId: string;
+  }[];
 
-    friendsListVisibility: true;
-    groupsVisibility: true;
-    dmPrivacy: true;
+  friendsListVisibility: ProfileVisibility;
+  groupsVisibility: ProfileVisibility;
+  dmPrivacy: string;
 
-    _count: { select: { posts: true } };
-  };
-}>;
+  _count: { posts: number };
+};
 
 const LANG_COOKIE = "kimepish-lang";
 
@@ -239,7 +242,11 @@ export default async function UserPage(props: {
           <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full border bg-gray-100 overflow-hidden flex-shrink-0">
             {user.image ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={user.image} alt={dict["profile.alt"]} className="h-full w-full object-cover" />
+              <img
+                src={user.image}
+                alt={dict["profile.alt"]}
+                className="h-full w-full object-cover"
+              />
             ) : (
               <div className="h-full w-full flex items-center justify-center text-3xl">
                 {user.emoji}
@@ -329,12 +336,12 @@ export default async function UserPage(props: {
             label={dict["friends.title"]}
             active={activeTab === "friends"}
           />
-      <StatLink
-  href={tabHref("groups")}
-  value={groupsCount}
-  label={dict["groups.title"]}
-  active={activeTab === "groups"}
-/>
+          <StatLink
+            href={tabHref("groups")}
+            value={groupsCount}
+            label={dict["groups.title"]}
+            active={activeTab === "groups"}
+          />
         </div>
       </div>
 
