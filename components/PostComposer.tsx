@@ -3,8 +3,11 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createPost } from "@/app/actions/createPost";
-import { PostCategory } from "@prisma/client";
-import PostImageUploader, { type UploadedPostImage } from "@/components/PostImageUploader";
+import PostImageUploader, {
+  type UploadedPostImage,
+} from "@/components/PostImageUploader";
+
+type PostCategory = "GOSSIPS" | "UNI" | "CONFESSIONS" | "MARKET" | "OTHER";
 
 const CATS: { label: string; value: PostCategory }[] = [
   { label: "Shai gossips", value: "GOSSIPS" },
@@ -57,6 +60,8 @@ export default function PostComposer() {
 
       setText("");
       setImage(null);
+      setCategory("GOSSIPS");
+      setAnonymous(true);
       router.refresh();
     });
   }
@@ -144,7 +149,12 @@ export default function PostComposer() {
       </div>
 
       <div className="px-4 py-3 border-t flex items-center justify-between k-border-strong">
-        <span className={"text-xs " + (left < 0 ? "text-red-500" : "text-[color:var(--text-muted)]")}>
+        <span
+          className={
+            "text-xs " +
+            (left < 0 ? "text-red-500" : "text-[color:var(--text-muted)]")
+          }
+        >
           {left} left
         </span>
 
