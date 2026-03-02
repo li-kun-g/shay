@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { Post, User } from "@prisma/client";
 import LikeButton from "@/components/LikeButton";
 import CommentSheet from "@/components/CommentSheet";
 import Link from "next/link";
@@ -10,8 +9,21 @@ import { useI18n } from "@/components/LanguageProvider";
 
 type Reaction = { userId: string; type: "LAUGH" | "SKULL" };
 
-type PostWithExtras = Post & {
-  author: User;
+type PostAuthor = {
+  id: string;
+  username: string;
+  name?: string | null;
+  image?: string | null;
+  emoji?: string | null;
+};
+
+type PostWithExtras = {
+  id: string;
+  content: string;
+  anonymous: boolean;
+  createdAt: Date | string;
+  imageUrl?: string | null;
+  author: PostAuthor;
   likes?: { userId: string }[];
   reactions?: Reaction[];
   postReactions?: Reaction[];
@@ -19,7 +31,6 @@ type PostWithExtras = Post & {
   reactionCounts?: { LAUGH?: number; SKULL?: number };
   laughCount?: number;
   skullCount?: number;
-  imageUrl?: string | null;
 };
 
 function formatDateStable(d: Date | string) {
@@ -61,7 +72,10 @@ function ReactionButton(props: {
   );
 }
 
-export default function Shaipost(props: { post: PostWithExtras; myUserId: string | null }) {
+export default function Shaipost(props: {
+  post: PostWithExtras;
+  myUserId: string | null;
+}) {
   const { t } = useI18n();
   const { post, myUserId } = props;
 
