@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/react";
 import Providers from "./providers";
 import Navbar from "@/components/Navbar";
 import SideNav from "@/components/SideNav";
@@ -86,6 +87,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </div>
           </div>
         </Providers>
+
+        <Analytics />
       </body>
     </html>
   );
