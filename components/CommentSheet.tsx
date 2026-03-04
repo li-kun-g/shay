@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { useSession, signIn } from "next-auth/react";
 import { createComment } from "@/app/actions/createComment";
 import { getComments } from "@/app/actions/getComments";
@@ -34,6 +35,7 @@ export default function CommentSheet(props: {
   const { t } = useI18n();
   const { status } = useSession();
 
+  const [mounted, setMounted] = useState(false);
   const [myUserId, setMyUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [comments, setComments] = useState<CommentItem[]>([]);
@@ -60,7 +62,7 @@ export default function CommentSheet(props: {
     setLoading(true);
     try {
       const res = await getComments(postId);
-      setComments(res as any);
+      setComments(res as CommentItem[]);
       setTimeout(() => {
         listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
       }, 50);
@@ -68,6 +70,10 @@ export default function CommentSheet(props: {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -78,14 +84,17 @@ export default function CommentSheet(props: {
       try {
         const [res, uid] = await Promise.all([getComments(postId), getMyUserId()]);
         if (!ignore) {
-          setComments(res as any);
-          setMyUserId(uid as any);
+          setComments(res as CommentItem[]);
+          setMyUserId(uid as string | null);
         }
       } finally {
         if (!ignore) setLoading(false);
       }
 
       setTimeout(() => inputRef.current?.focus(), 80);
+      setTimeout(() => {
+        listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
+      }, 80);
     })();
 
     return () => {
@@ -181,7 +190,7 @@ export default function CommentSheet(props: {
     setPendingDeleteId(null);
   }
 
-  if (!open) return null;
+  if (!mounted || !open) return null;
 
   const mobileHeightClass =
     comments.length <= 1
@@ -197,7 +206,7 @@ export default function CommentSheet(props: {
       ? "h-[520px]"
       : "h-[88vh] max-h-[880px]";
 
-  return (
+  return createPortal(
     <>
       <div className="fixed inset-0 z-[220]">
         <button
@@ -210,13 +219,16 @@ export default function CommentSheet(props: {
         {/* Mobile */}
         <div className="sm:hidden absolute inset-0 flex items-center justify-center p-3">
           <div
+            role="dialog"
+            aria-modal="true"
             className={[
-              "relative z-[221] w-full rounded-3xl border shadow-2xl",
+              "relative z-[221] w-full max-w-[680px] rounded-3xl border shadow-2xl",
               "bg-white dark:bg-[var(--surface)]",
               "border-gray-200 dark:border-[var(--border-strong)]",
               "overflow-hidden flex flex-col",
               mobileHeightClass,
             ].join(" ")}
+            onClick={(e) => e.stopPropagation()}
           >
             <Header title={title} onClose={onClose} mobile />
 
@@ -247,6 +259,8 @@ export default function CommentSheet(props: {
         {/* Desktop */}
         <div className="hidden sm:flex absolute inset-0 items-center justify-center p-6">
           <div
+            role="dialog"
+            aria-modal="true"
             className={[
               "relative z-[221] w-full max-w-2xl rounded-3xl border shadow-2xl",
               "bg-white dark:bg-[var(--surface)]",
@@ -254,6 +268,7 @@ export default function CommentSheet(props: {
               "overflow-hidden flex flex-col",
               desktopHeightClass,
             ].join(" ")}
+            onClick={(e) => e.stopPropagation()}
           >
             <Header title={title} onClose={onClose} />
 
@@ -295,7 +310,8 @@ export default function CommentSheet(props: {
         onConfirm={confirmDelete}
         onCancel={cancelDelete}
       />
-    </>
+    </>,
+    document.body
   );
 }
 
@@ -318,6 +334,7 @@ function Header(props: {
       )}
       <h2 className="text-base font-semibold">{title}</h2>
       <button
+        type="button"
         className="rounded-full border px-3 py-1 text-sm hover:bg-gray-50 dark:hover:bg-white/10"
         onClick={onClose}
       >
