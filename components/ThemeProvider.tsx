@@ -15,7 +15,7 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 const STORAGE_KEY = "kimepish-theme";
 
 function getSystemTheme(): "light" | "dark" {
-  if (typeof window === "undefined") return "light";
+  if (typeof window === "undefined") return "dark"; // Default to dark during SSR
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
@@ -26,13 +26,15 @@ function applyThemeClass(resolved: "light" | "dark") {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeMode>("system");
-  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
+  // 1. Set initial state to "dark" instead of "system"
+  const [theme, setThemeState] = useState<ThemeMode>("dark");
+  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("dark");
 
   // load saved theme
   useEffect(() => {
     try {
-      const saved = (localStorage.getItem(STORAGE_KEY) as ThemeMode | null) ?? "system";
+      // 2. If no theme is saved in localStorage, default to "dark"
+      const saved = (localStorage.getItem(STORAGE_KEY) as ThemeMode | null) ?? "dark";
       if (saved === "light" || saved === "dark" || saved === "system") setThemeState(saved);
     } catch {}
   }, []);
