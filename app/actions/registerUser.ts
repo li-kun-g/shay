@@ -97,22 +97,33 @@ export async function registerUser(input: {
   const appUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
   const link = `${appUrl}/verify-email?token=${token}`;
 
-  await sendEmail({
+ await sendEmail({
     to: email,
     subject: "Verify your KIMEPish account ☕",
     html: `
-      <div style="font-family: Arial, sans-serif; line-height: 1.5;">
-        <h2>Welcome to KIMEPish ☕</h2>
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111; max-width: 600px; margin: 0 auto;">
+        <h2 style="font-size: 24px; font-weight: bold; margin-bottom: 20px;">Welcome to KIMEPish ☕</h2>
         <p>Hi ${name},</p>
-        <p>Please verify your email to activate your account:</p>
-        <p>
-          <a href="${link}" style="display:inline-block;padding:10px 16px;background:#111;color:#fff;border-radius:10px;text-decoration:none;">
+        <p>Please verify your email to activate your account and start joining the campus tea:</p>
+        
+        <div style="margin: 30px 0;">
+          <a href="${link}" style="display:inline-block; padding:12px 24px; background-color: #000; color: #fff; border-radius: 12px; text-decoration: none; font-weight: 500;">
             Verify Email
           </a>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
+
+        <p style="font-size: 13px; color: #666;">
+          <strong>Button not working?</strong> If the button above is disabled (this can happen if the email is in your spam folder), please copy and paste the link below into your browser:
         </p>
-        <p>If you didn’t sign up, you can safely ignore this email.</p>
-        <p style="color:#666;font-size:12px;">
-          This link expires in 30 minutes.
+        
+        <p style="font-size: 13px; color: #0070f3; word-break: break-all;">
+          <a href="${link}" style="color: #0070f3; text-decoration: underline;">${link}</a>
+        </p>
+
+        <p style="color: #999; font-size: 12px; margin-top: 30px;">
+          This link expires in 30 minutes. If you didn’t sign up for KIMEPish, you can safely ignore this email.
         </p>
       </div>
     `,
