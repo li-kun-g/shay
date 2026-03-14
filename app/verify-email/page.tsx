@@ -13,20 +13,30 @@ export default async function VerifyEmailPage(props: {
   const sp = await Promise.resolve(props.searchParams);
   const token = (sp?.token ?? "").trim();
 
+  // Helper for the Card Container to keep code DRY
+  const Container = ({ children }: { children: React.ReactNode }) => (
+    <main className="min-h-screen flex items-center justify-center bg-[#FAF7F2] dark:bg-black px-4 transition-colors">
+      <div className="max-w-md w-full rounded-3xl border bg-white dark:bg-[#111] p-8 shadow-sm border-gray-200 dark:border-white/10 text-center">
+        {children}
+      </div>
+    </main>
+  );
+
   if (!token) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#FAF7F2] px-4">
-        <div className="max-w-md w-full rounded-2xl border bg-white p-6 shadow-sm">
-          <h1 className="text-lg font-semibold">Invalid link</h1>
-          <p className="text-sm text-gray-600 mt-1">Missing token.</p>
-          <Link
-            href="/signin"
-            className="mt-4 inline-block rounded-xl bg-black px-4 py-2 text-sm text-white"
-          >
-            Go to login
-          </Link>
-        </div>
-      </main>
+      <Container>
+        <div className="text-4xl mb-4">⚠️</div>
+        <h1 className="text-xl font-semibold dark:text-white">Invalid link</h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+          The verification token is missing.
+        </p>
+        <Link
+          href="/signin"
+          className="mt-6 block w-full rounded-xl bg-black dark:bg-white dark:text-black px-4 py-3 text-sm font-medium text-white transition hover:opacity-90"
+        >
+          Back to Login
+        </Link>
+      </Container>
     );
   }
 
@@ -36,49 +46,47 @@ export default async function VerifyEmailPage(props: {
 
   if (!record || record.expiresAt < new Date()) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#FAF7F2] px-4">
-        <div className="max-w-md w-full rounded-2xl border bg-white p-6 shadow-sm">
-          <h1 className="text-lg font-semibold">Link expired</h1>
-          <p className="text-sm text-gray-600 mt-1">
-            Please sign up again to get a new verification email.
-          </p>
-          <Link
-            href="/signup"
-            className="mt-4 inline-block rounded-xl bg-black px-4 py-2 text-sm text-white"
-          >
-            Go to signup
-          </Link>
-        </div>
-      </main>
+      <Container>
+        <div className="text-4xl mb-4">⏰</div>
+        <h1 className="text-xl font-semibold dark:text-white">Link expired</h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+          This link has expired. Please sign up again to receive a new verification email.
+        </p>
+        <Link
+          href="/signup"
+          className="mt-6 block w-full rounded-xl bg-black dark:bg-white dark:text-black px-4 py-3 text-sm font-medium text-white transition hover:opacity-90"
+        >
+          Go to Sign up
+        </Link>
+      </Container>
     );
   }
 
-  // mark verified (idempotent)
+  // Mark verified
   await prisma.user.update({
     where: { email: record.email },
     data: { emailVerified: new Date() },
   });
 
-  // delete token
+  // Delete token
   await prisma.emailVerificationToken.delete({
     where: { token },
   });
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-[#FAF7F2] px-4">
-      <div className="max-w-md w-full rounded-2xl border bg-white p-6 shadow-sm">
-        <h1 className="text-lg font-semibold">Email verified ✅</h1>
-        <p className="text-sm text-gray-600 mt-1">
-          You can now log in and spill responsibly ☕
-        </p>
+    <Container>
+      <div className="text-4xl mb-4">✅</div>
+      <h1 className="text-2xl font-semibold tracking-tight dark:text-white">Email verified</h1>
+      <p className="text-sm text-gray-600 dark:text-gray-400 mt-3 leading-relaxed">
+        Your account is now active. You can now log in and join the KIMEP community ☕
+      </p>
 
-        <Link
-          href="/signin"
-          className="mt-4 inline-block rounded-xl bg-black px-4 py-2 text-sm text-white"
-        >
-          Go to login
-        </Link>
-      </div>
-    </main>
+      <Link
+        href="/signin"
+        className="mt-8 block w-full rounded-xl bg-black dark:bg-white dark:text-black px-4 py-3 text-sm font-medium text-white transition hover:opacity-90"
+      >
+        Sign in to KIMEPish
+      </Link>
+    </Container>
   );
 }

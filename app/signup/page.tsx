@@ -2,7 +2,6 @@
 
 import { useState, useTransition, useMemo } from "react";
 import { registerUser } from "@/app/actions/registerUser";
-import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { normalizeUsername } from "@/lib/username";
 
@@ -21,8 +20,8 @@ export default function SignUpPage() {
   const [password, setPassword] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isSuccess, setIsSuccess] = useState(false); // New state for the success view
 
-  // 🔹 preview normalized username (UX only)
   const normalizedUsername = useMemo(
     () => normalizeUsername(username),
     [username]
@@ -41,20 +40,16 @@ export default function SignUpPage() {
 
     startTransition(async () => {
       try {
-        await registerUser({
+        const res = await registerUser({
           name,
           username: normalizedUsername,
           email: normalizedEmail,
           password,
         });
 
-        // auto-login after signup
-        await signIn("credentials", {
-          email: normalizedEmail,
-          password,
-          callbackUrl: "/",
-          redirect: true,
-        });
+        if (res.ok) {
+          setIsSuccess(true); // Show success screen instead of auto-login
+        }
       } catch (e: any) {
         setErr(e?.message || "Failed to sign up");
       }
@@ -68,11 +63,39 @@ export default function SignUpPage() {
     normalizedUsername.length >= 3 &&
     emailLooksValid;
 
+  // --- SUCCESS VIEW ---
+  if (isSuccess) {
+    return (
+      <main className="min-h-[100vh] flex items-center justify-center px-4 bg-[#FAF7F2] dark:bg-black">
+        <div className="w-full max-w-sm rounded-3xl border bg-white dark:bg-[#111] p-8 shadow-sm text-center border-gray-200 dark:border-white/10">
+          <div className="text-4xl mb-4">📧</div>
+          <h1 className="text-2xl font-semibold tracking-tight">Check your email</h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-3 leading-relaxed">
+            We sent a confirmation link to <br />
+            <span className="font-semibold text-black dark:text-white">{normalizedEmail}</span>
+          </p>
+          
+          <div className="mt-6 rounded-2xl bg-amber-50 dark:bg-amber-900/20 p-4 border border-amber-100 dark:border-amber-900/30 text-xs text-amber-800 dark:text-amber-200">
+            <strong>Pro tip:</strong> If you don't see it, please check your <strong>Spam</strong> or Junk folder. The filters can be strict!
+          </div>
+
+          <Link
+            href="/signin"
+            className="mt-8 block w-full rounded-xl bg-black dark:bg-white dark:text-black px-4 py-3 text-sm font-medium text-white transition hover:opacity-90"
+          >
+            Back to Log in
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  // --- FORM VIEW ---
   return (
-    <main className="min-h-[100vh] flex items-center justify-center px-4 bg-[#FAF7F2]">
-      <div className="w-full max-w-sm rounded-2xl border bg-white p-5 shadow-sm">
-        <h1 className="text-xl font-semibold">Create your KIMEPish ☕</h1>
-        <p className="text-sm text-gray-600 mt-1">
+    <main className="min-h-[100vh] flex items-center justify-center px-4 bg-[#FAF7F2] dark:bg-black">
+      <div className="w-full max-w-sm rounded-2xl border bg-white dark:bg-[#111] p-5 shadow-sm dark:border-white/10">
+        <h1 className="text-xl font-semibold dark:text-white">Create your KIMEPish ☕</h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
           Choose a unique username to join the campus tea.
         </p>
 
@@ -83,39 +106,33 @@ export default function SignUpPage() {
         )}
 
         <div className="mt-4 space-y-3">
-          {/* Name */}
           <input
-            className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black"
+            className="w-full rounded-xl border dark:border-white/10 dark:bg-transparent px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
             placeholder="Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
 
-          {/* Username */}
           <div>
             <input
-              className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black"
+              className="w-full rounded-xl border dark:border-white/10 dark:bg-transparent px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
               placeholder="Username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
             {username && (
               <p className="mt-1 text-xs text-gray-500">
-                Your profile will be:{" "}
-                <span className="font-medium">
-                  /u/{normalizedUsername || "…"}
-                </span>
+                Your profile: <span className="font-medium">/u/{normalizedUsername}</span>
               </p>
             )}
           </div>
 
-          {/* Email */}
           <div>
             <input
               className={[
-                "w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2",
+                "w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 dark:bg-transparent",
                 email.length === 0
-                  ? "focus:ring-black"
+                  ? "focus:ring-black dark:border-white/10"
                   : emailLooksValid
                   ? "border-green-300 focus:ring-green-500"
                   : "border-red-300 focus:ring-red-500",
@@ -125,37 +142,26 @@ export default function SignUpPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
-
-            <p className="mt-1 text-xs text-gray-500">
-              Use your KIMEP email address (<span className="font-medium">@kimep.kz</span>)
-            </p>
-
-            {email.length > 0 && !emailLooksValid && (
-              <p className="mt-1 text-xs text-red-600">
-                Only @kimep.kz emails are allowed.
-              </p>
-            )}
+            <p className="mt-1 text-xs text-gray-500">Use @kimep.kz email</p>
           </div>
 
-          {/* Password */}
           <input
-            className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black"
+            className="w-full rounded-xl border dark:border-white/10 dark:bg-transparent px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
             placeholder="Password (min 8 chars)"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
 
-          {/* Submit */}
           <button
             onClick={onSubmit}
             disabled={isPending || !canSubmit}
-            className="w-full rounded-xl bg-black px-4 py-2 text-sm text-white disabled:opacity-50"
+            className="w-full rounded-xl bg-black dark:bg-white dark:text-black px-4 py-2 text-sm text-white disabled:opacity-50"
           >
             {isPending ? "Creating..." : "Sign up"}
           </button>
 
-          <p className="text-sm text-gray-600 text-center">
+          <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
             Already have an account?{" "}
             <Link className="underline" href="/signin">
               Log in
