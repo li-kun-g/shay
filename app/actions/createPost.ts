@@ -16,41 +16,41 @@ export async function createPost(input: {
 }) {
   const session = await getServerSession(authOptions);
 
+  // Return an object instead of throwing an Error to prevent 500 crashes
   if (!session?.user?.email) {
-    throw new Error("AUTH_REQUIRED");
+    return { error: "AUTH_REQUIRED" };
   }
 
-  const content = (input.content ?? "").trim();
-  const imageUrl = (input.imageUrl ?? null) ? String(input.imageUrl).trim() : null;
-  const imageKey = (input.imageKey ?? null) ? String(input.imageKey).trim() : null;
+  try {
+    const content = (input.content ?? "").trim();
+    const imageUrl = input.imageUrl ? String(input.imageUrl).trim() : null;
+    const imageKey = input.imageKey ? String(input.imageKey).trim() : null;
 
-  if (!content && !imageUrl) return { ok: true };
+    if (!content && !imageUrl) return { ok: true };
+    if (content.length > 280) return { error: "CONTENT_TOO_LONG" };
 
-  if (content.length > 280) throw new Error("CONTENT_TOO_LONG");
+    const me = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { id: true },
+    });
 
-  if (input.anonymous && imageUrl) {
-    throw new Error("ANON_CANNOT_HAVE_IMAGE");
+    if (!me) return { error: "AUTH_REQUIRED" };
+
+    await prisma.post.create({
+      data: {
+        content,
+        anonymous: input.anonymous,
+        category: input.category as any,
+        authorId: me.id,
+        imageUrl,
+        imageKey,
+      },
+    });
+
+    revalidatePath("/");
+    return { ok: true };
+  } catch (e) {
+    console.error("CreatePost Error:", e);
+    return { error: "SERVER_ERROR" };
   }
-
-  const me = await prisma.user.findUnique({
-    where: { email: session.user.email },
-    select: { id: true },
-  });
-
-  if (!me) throw new Error("AUTH_REQUIRED");
-
-  await prisma.post.create({
-    data: {
-      content,
-      anonymous: input.anonymous,
-      category: input.category as any,
-      authorId: me.id,
-      imageUrl,
-      imageKey,
-    },
-  });
-
-  revalidatePath("/");
-
-  return { ok: true };
 }
