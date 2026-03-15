@@ -6,6 +6,7 @@ import { createPost } from "@/app/actions/createPost";
 import PostImageUploader, {
   type UploadedPostImage,
 } from "@/components/PostImageUploader";
+import { useSession } from "next-auth/react";
 
 type PostCategory = "GOSSIPS" | "UNI" | "CONFESSIONS" | "MARKET" | "OTHER";
 
@@ -19,6 +20,7 @@ const CATS: { label: string; value: PostCategory }[] = [
 
 export default function PostComposer() {
   const router = useRouter();
+  const { data: session } = useSession();
 
   const [text, setText] = useState("");
   const [anonymous, setAnonymous] = useState(true);
@@ -29,14 +31,6 @@ export default function PostComposer() {
 
   const max = 280;
   const left = max - text.length;
-
-  function toggleAnonymous() {
-    setAnonymous((a) => {
-      const next = !a;
-      if (next) setImage(null);
-      return next;
-    });
-  }
 
   const canPost = useMemo(() => {
     const t = text.trim();
@@ -49,20 +43,45 @@ export default function PostComposer() {
   function handlePost() {
     if (!canPost || isPending) return;
 
-    startTransition(async () => {
-      await createPost({
-        content: text.trim(),
-        anonymous,
-        category,
-        imageUrl: image?.url ?? null,
-        imageKey: image?.key ?? null,
-      });
+    // 1. Client-side check before calling the action
+    if (!session) {
+      router.push("/signin");
+      return;
+    }
 
-      setText("");
-      setImage(null);
-      setCategory("GOSSIPS");
-      setAnonymous(true);
-      router.refresh();
+    startTransition(async () => {
+      try {
+        const res = await createPost({
+          content: text.trim(),
+          anonymous,
+          category,
+          imageUrl: image?.url ?? null,
+          imageKey: image?.key ?? null,
+        });
+
+        if (res?.ok) {
+          setText("");
+          setImage(null);
+          setCategory("GOSSIPS");
+          setAnonymous(true);
+          router.refresh();
+        }
+      } catch (e: any) {
+        // 2. Safety catch for the AUTH_REQUIRED error from server
+        if (e.message === "AUTH_REQUIRED") {
+          router.push("/signin");
+        } else {
+          alert("An unexpected error occurred.");
+        }
+      }
+    });
+  }
+
+  function toggleAnonymous() {
+    setAnonymous((a) => {
+      const next = !a;
+      if (next) setImage(null);
+      return next;
     });
   }
 
@@ -82,7 +101,6 @@ export default function PostComposer() {
 
         {image?.url && (
           <div className="mt-3 rounded-3xl border overflow-hidden relative k-muted k-border-strong">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={image.url}
               alt="post image"
@@ -92,7 +110,6 @@ export default function PostComposer() {
               type="button"
               onClick={() => setImage(null)}
               className="absolute top-3 right-3 rounded-full border px-3 py-1 text-sm k-surface k-border-strong hover:opacity-90"
-              aria-label="Remove image"
             >
               ✕
             </button>
@@ -104,13 +121,11 @@ export default function PostComposer() {
             type="button"
             onClick={toggleAnonymous}
             className={[
-              "rounded-full border px-3 py-2 text-sm transition active:scale-95",
-              "k-border-strong",
+              "rounded-full border px-3 py-2 text-sm transition active:scale-95 k-border-strong",
               anonymous
                 ? "bg-black text-white border-black"
                 : "k-surface hover:bg-[var(--muted)]",
             ].join(" ")}
-            title="Anonymous posts can’t include photos"
           >
             {anonymous ? "Anonymous ✕" : "Non-anon"}
           </button>
@@ -118,7 +133,7 @@ export default function PostComposer() {
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value as PostCategory)}
-            className="rounded-full border px-3 py-2 text-sm k-surface k-border-strong hover:bg-[var(--muted)]"
+            className="rounded-full border px-3 py-2 text-sm k-surface k-border-strong"
           >
             {CATS.map((c) => (
               <option key={c.value} value={c.value}>
@@ -134,37 +149,18 @@ export default function PostComposer() {
               onError={(msg: string) => alert(msg)}
             />
           </div>
-
-          {anonymous && (
-            <span className="text-xs text-[color:var(--text-muted)]">
-              Add photo is available for non-anon posts
-            </span>
-          )}
-          {!anonymous && image && (
-            <span className="text-xs text-[color:var(--text-muted)]">
-              Only 1 photo per post (for now)
-            </span>
-          )}
         </div>
       </div>
 
       <div className="px-4 py-3 border-t flex items-center justify-between k-border-strong">
-        <span
-          className={
-            "text-xs " +
-            (left < 0 ? "text-red-500" : "text-[color:var(--text-muted)]")
-          }
-        >
+        <span className={"text-xs " + (left < 0 ? "text-red-500" : "text-[color:var(--text-muted)]")}>
           {left} left
         </span>
 
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => {
-              setText("");
-              setImage(null);
-            }}
+            onClick={() => { setText(""); setImage(null); }}
             className="rounded-full border px-4 py-2 text-sm k-surface k-border-strong hover:bg-[var(--muted)]"
           >
             Clear
