@@ -58,6 +58,15 @@ export default function SignInPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+            {/* Added Forgot Password Link Here */}
+            <div className="mt-2 flex justify-end">
+              <Link
+                href="/forgot-password"
+                className="text-xs font-medium text-gray-500 hover:text-black dark:text-gray-400 dark:hover:text-white transition-colors"
+              >
+                Forgot password?
+              </Link>
+            </div>
           </div>
 
           <button
