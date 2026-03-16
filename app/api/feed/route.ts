@@ -83,7 +83,11 @@ export async function GET(req: Request) {
   const myId =
     session?.user && "id" in session.user ? (session.user.id as string) : null;
 
-  let where: Record<string, unknown> = {};
+  // ✅ MODIFIED: Initialize where with status: "APPROVED"
+  let where: Record<string, any> = {
+    status: "APPROVED",
+  };
+
   if (cat) where.category = cat;
   if (anon === "anon") where.anonymous = true;
   if (anon === "non") where.anonymous = false;
@@ -120,7 +124,7 @@ export async function GET(req: Request) {
   }
 
   const posts: PostRow[] = await prisma.post.findMany({
-    where: Object.keys(where).length ? where : undefined,
+    where, // ✅ No longer need undefined check because status is always present
     orderBy,
     take: TAKE,
     skip,

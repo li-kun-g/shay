@@ -16,7 +16,7 @@ export async function createPost(input: {
 }) {
   const session = await getServerSession(authOptions);
 
-  // Return an object instead of throwing an Error to prevent 500 crashes
+  // ✅ Client checks for this specific "error" string
   if (!session?.user?.email) {
     return { error: "AUTH_REQUIRED" };
   }
@@ -36,6 +36,8 @@ export async function createPost(input: {
 
     if (!me) return { error: "AUTH_REQUIRED" };
 
+    const status = input.anonymous ? "PENDING" : "APPROVED";
+
     await prisma.post.create({
       data: {
         content,
@@ -44,11 +46,16 @@ export async function createPost(input: {
         authorId: me.id,
         imageUrl,
         imageKey,
+        status: status,
       },
     });
 
     revalidatePath("/");
-    return { ok: true };
+    
+    return { 
+      ok: true, 
+      pending: input.anonymous 
+    };
   } catch (e) {
     console.error("CreatePost Error:", e);
     return { error: "SERVER_ERROR" };

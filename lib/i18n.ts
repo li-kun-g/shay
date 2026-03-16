@@ -368,6 +368,9 @@ export type I18nKey =
 | "comments.empty"
 | "comments.delete"
 | "common.sending"
+| "common.done"
+| "composer.sentToModeration"
+| "composer.moderationDesc"
 
 const DICTS: Record<Lang, Record<I18nKey, string>> = {
   EN: {
@@ -720,6 +723,9 @@ const DICTS: Record<Lang, Record<I18nKey, string>> = {
 "comments.empty": "No replies yet. Spill first ☕",
 "comments.delete": "Delete reply",
 "common.sending": "Sending...",
+"common.done": "Done",
+    "composer.sentToModeration": "Your post sent for moderation",
+    "composer.moderationDesc": "It will appear on the feed once it has been approved by the team!",
   },
   RU: {
     "nav.feed": "Лента",
@@ -1071,6 +1077,9 @@ const DICTS: Record<Lang, Record<I18nKey, string>> = {
 "comments.empty": "Ответов пока нет. Пролей чай первым ☕",
 "comments.delete": "Удалить ответ",
 "common.sending": "Отправка...",
+"common.done": "Готово",
+    "composer.sentToModeration": "Ваш пост отправлен на модерацию",
+    "composer.moderationDesc": "Он появится в ленте после того, как команда одобрит его!",
   },
   KK: {
     "nav.feed": "Таспа",
@@ -1422,6 +1431,9 @@ const DICTS: Record<Lang, Record<I18nKey, string>> = {
 "comments.empty": "Әзірге жауаптар жоқ. Бірінші болып шай ☕",
 "comments.delete": "Жауапты өшіру",
 "common.sending": "Жіберілуде...",
+"common.done": "Дайын",
+    "composer.sentToModeration": "Сіздің жазбаңыз модерацияға жіберілді",
+    "composer.moderationDesc": "Ол команда мақұлдағаннан кейін лентада пайда болады!",
   },
 };
 

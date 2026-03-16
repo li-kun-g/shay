@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  // Note: For Prisma v7+, the URL is managed in prisma.config.ts
 }
 
 model Account {
@@ -48,84 +49,93 @@ enum PostCategory {
   OTHER
 }
 
+// ✅ NEW: Added for the moderation feature
+enum PostStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
-  id                     String               @id @default(cuid())
-  email                  String               @unique
-  name                   String?
-  emoji                  String               @default("☕")
-  createdAt              DateTime             @default(now())
-  emailVerified          DateTime?
-  image                  String?
-  passwordHash           String?
-  college                String               @default("Bang College of Business")
-  kimepId                Int?
-  major                  String?
-  status                 String?
-  yearOfStudy            Int?
-  username               String               @unique
-  isGroupAccount         Boolean              @default(false)
-  isOfficial             Boolean              @default(false)
-  accounts               Account[]
-  badges                 Badge[]
-  comments               Comment[]
-  conversations          ConversationMember[]
-  notifications Notification[] @relation("UserNotifications")
-  causedNotifications Notification[] @relation("NotificationActor")
-  eventsCreated          Event[]              @relation("UserCreatedEvents")
-  eventAttendance        EventAttendance[]
-  eventRequests          EventRequest[]
-  sentFriendRequests     FriendRequest[]      @relation("sentFriendRequests")
+  id                    String                @id @default(cuid())
+  email                 String                @unique
+  name                  String?
+  emoji                 String                @default("☕")
+  createdAt             DateTime              @default(now())
+  emailVerified         DateTime?
+  image                 String?
+  passwordHash          String?
+  college               String                @default("Bang College of Business")
+  kimepId               Int?
+  major                 String?
+  status                String?
+  yearOfStudy           Int?
+  username              String                @unique
+  isGroupAccount        Boolean               @default(false)
+  isOfficial            Boolean               @default(false)
+  accounts              Account[]
+  badges                Badge[]
+  comments              Comment[]
+  conversations         ConversationMember[]
+  notifications         Notification[]        @relation("UserNotifications")
+  causedNotifications   Notification[]        @relation("NotificationActor")
+  eventsCreated         Event[]               @relation("UserCreatedEvents")
+  eventAttendance       EventAttendance[]
+  eventRequests         EventRequest[]
+  sentFriendRequests    FriendRequest[]       @relation("sentFriendRequests")
   receivedFriendRequests FriendRequest[]      @relation("receivedFriendRequests")
-  friendshipsA           Friendship[]         @relation("friendshipA")
-  friendshipsB           Friendship[]         @relation("friendshipB")
-  groupsAsPresident      Group[]              @relation("groupsAsPresident")
-  groupCreateRequests    GroupCreateRequest[]
-  groupFollows           GroupFollow[]
-  groupJoinRequests      GroupJoinRequest[]
-  groupMemberships       GroupMember[]
-  likes                  Like[]
-  messages               Message[]
-  posts                  Post[]
-  professorVotes         ProfessorVote[]
-  sessions               Session[]
-  postReactions          PostReaction[]
-  campusStatus           CampusStatus?
-  campusStatusUpdatedAt  DateTime?
-  campusStatusExpiresAt  DateTime?
-  campusStatusVisibility CampusVisibility @default(FRIENDS)
-  campusStatusDuration   CampusDuration   @default(H2)
-  friendsListVisibility  ProfileVisibility @default(EVERYONE)
-  groupsVisibility       ProfileVisibility @default(EVERYONE)
-  dmPrivacy              DmPrivacy         @default(EVERYONE)
-  language               AppLanguage       @default(EN)
+  friendshipsA          Friendship[]          @relation("friendshipA")
+  friendshipsB          Friendship[]          @relation("friendshipB")
+  groupsAsPresident     Group[]               @relation("groupsAsPresident")
+  groupCreateRequests   GroupCreateRequest[]
+  groupFollows          GroupFollow[]
+  groupJoinRequests     GroupJoinRequest[]
+  groupMemberships      GroupMember[]
+  likes                 Like[]
+  messages              Message[]
+  posts                 Post[]
+  professorVotes        ProfessorVote[]
+  sessions              Session[]
+  postReactions         PostReaction[]
+  campusStatus          CampusStatus?
+  campusStatusUpdatedAt DateTime?
+  campusStatusExpiresAt DateTime?
+  campusStatusVisibility CampusVisibility      @default(FRIENDS)
+  campusStatusDuration   CampusDuration        @default(H2)
+  friendsListVisibility ProfileVisibility     @default(EVERYONE)
+  groupsVisibility      ProfileVisibility     @default(EVERYONE)
+  dmPrivacy             DmPrivacy             @default(EVERYONE)
+  language              AppLanguage           @default(EN)
 
   @@index([username])
 }
 
 model Post {
-  id           String         @id @default(cuid())
-  content      String
-  anonymous    Boolean        @default(true)
+  id            String         @id @default(cuid())
+  content       String
+  anonymous     Boolean        @default(true)
+  
+  // ✅ NEW: Defaulting to APPROVED so existing posts stay live
+  status        PostStatus     @default(APPROVED)
 
-  category     PostCategory   @default(OTHER)
+  category      PostCategory   @default(OTHER)
 
-  // ✅ NEW: image attachment (1 image per post)
-  imageUrl     String?
-  imageKey     String?
+  imageUrl      String?
+  imageKey      String?
 
-  authorId     String
-  author       User           @relation(fields: [authorId], references: [id])
+  authorId      String
+  author        User           @relation(fields: [authorId], references: [id])
 
-  createdAt    DateTime       @default(now())
+  createdAt     DateTime       @default(now())
 
-  comments     Comment[]
-  likes        Like[]
+  comments      Comment[]
+  likes         Like[]
   postReactions PostReaction[]
 
   @@index([category, createdAt])
   @@index([authorId, createdAt])
+  @@index([status, createdAt])
 }
-
 
 model Comment {
   id        String   @id @default(cuid())
@@ -172,31 +182,27 @@ model Badge {
 }
 
 model Event {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   title       String
   description String
   location    String?
   startsAt    DateTime
   endsAt      DateTime?
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime @default(now())
 
-  // ✅ NEW
   imageUrl    String?
   imageKey    String?
 
   createdById String
-  createdBy   User   @relation("UserCreatedEvents", fields: [createdById], references: [id], onDelete: Cascade)
+  createdBy   User     @relation("UserCreatedEvents", fields: [createdById], references: [id], onDelete: Cascade)
 
-  // ✅ NEW: belongs to Group
-  groupId String?
-  group   Group? @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId     String?
+  group       Group?   @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
-  attendees EventAttendance[]
+  attendees   EventAttendance[]
 
   @@index([groupId, startsAt])
 }
-
-
 
 model EventAttendance {
   id        String   @id @default(cuid())
@@ -227,7 +233,7 @@ model Conversation {
   id        String               @id @default(cuid())
   type      ConversationType
   name      String?
-  dmKey     String?              @unique  // ✅ add
+  dmKey     String?              @unique
   createdAt DateTime             @default(now())
   members   ConversationMember[]
   messages  Message[]
@@ -238,8 +244,6 @@ model ConversationMember {
   conversationId String
   userId         String
   joinedAt       DateTime     @default(now())
-
-  // ✅ NEW
   lastReadAt     DateTime?
 
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
@@ -269,7 +273,7 @@ model FriendRequest {
   fromId    String
   toId      String
   from      User                @relation("sentFriendRequests", fields: [fromId], references: [id], onDelete: Cascade)
-  to        User                @relation("receivedFriendRequests", fields: [toId], references: [id], onDelete: Cascade)
+  to                User                @relation("receivedFriendRequests", fields: [toId], references: [id], onDelete: Cascade)
 
   @@unique([fromId, toId])
   @@index([toId, status])
@@ -293,15 +297,14 @@ model Group {
   createdAt DateTime @default(now())
 
   name        String
-  slug        String  @unique
+  slug        String   @unique
   description String?
   image       String?
 
-  status GroupStatus @default(PENDING)
+  status      GroupStatus @default(PENDING)
 
-  // President (owner)
   presidentId String
-  president   User   @relation("groupsAsPresident", fields: [presidentId], references: [id], onDelete: Cascade)
+  president   User        @relation("groupsAsPresident", fields: [presidentId], references: [id], onDelete: Cascade)
 
   members      GroupMember[]
   followers    GroupFollow[]
@@ -309,10 +312,8 @@ model Group {
 
   membersListVisibility MembersListVisibility @default(EVERYONE)
 
-  // ✅ NEW: events posted from this group
   events Event[]
 }
-
 
 model GroupMember {
   id           String    @id @default(cuid())
@@ -440,11 +441,11 @@ model PostReaction {
   createdAt DateTime         @default(now())
   type      PostReactionType
 
-  postId String
-  userId String
+  postId    String
+  userId    String
 
-  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([postId, userId, type])
   @@index([postId])
@@ -515,22 +516,21 @@ enum NotificationType {
 }
 
 model Notification {
-  id          String           @id @default(cuid())
-  userId       String
-  type        NotificationType @default(SYSTEM)
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType @default(SYSTEM)
 
-  title       String
-  body        String?
-  href        String?          // where to open when user clicks
-  isRead      Boolean          @default(false)
+  title     String
+  body      String?
+  href      String?
+  isRead    Boolean          @default(false)
 
-  // optional actor (who triggered it)
-  actorId     String?
-  actor       User?            @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+  actorId   String?
+  actor     User?            @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
 
-  user        User             @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  user      User             @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt   DateTime         @default(now())
+  createdAt DateTime         @default(now())
 
   @@index([userId, isRead, createdAt])
   @@index([userId, createdAt])
