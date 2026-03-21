@@ -23,37 +23,6 @@ type CampusStatus = "ON" | "OFF" | null;
 type ProfileTab = "posts" | "friends" | "groups";
 type ProfileVisibility = "EVERYONE" | "FRIENDS_ONLY";
 
-type UserWithProfileStuff = {
-  id: string;
-  username: string;
-  name: string | null;
-  image: string | null;
-  emoji: string;
-  status: string | null;
-  major: string | null;
-  college: string;
-  kimepId: number | null;
-  yearOfStudy: number | null;
-
-  campusStatus: "ON" | "OFF" | null;
-  campusStatusUpdatedAt: Date | null;
-  campusStatusExpiresAt: Date | null;
-  campusStatusVisibility: string;
-
-  badges: {
-    id: string;
-    name: string;
-    emoji: string;
-    userId: string;
-  }[];
-
-  friendsListVisibility: ProfileVisibility;
-  groupsVisibility: ProfileVisibility;
-  dmPrivacy: string;
-
-  _count: { posts: number };
-};
-
 const LANG_COOKIE = "kimepish-lang";
 
 function computeCampusDisplay(input: {
@@ -146,7 +115,7 @@ export default async function UserPage(props: {
   const myUserId =
     session?.user && "id" in session.user ? (session.user.id as string) : null;
 
-  const user = (await prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { username },
     select: {
       id: true,
@@ -170,10 +139,8 @@ export default async function UserPage(props: {
       friendsListVisibility: true,
       groupsVisibility: true,
       dmPrivacy: true,
-
-      _count: { select: { posts: true } },
     },
-  })) as UserWithProfileStuff | null;
+  });
 
   if (!user) notFound();
 
@@ -204,12 +171,20 @@ export default async function UserPage(props: {
   );
 
   const campus = computeCampusDisplay({
-    status: (user.campusStatus ?? null) as CampusStatus,
-    updatedAt: (user.campusStatusUpdatedAt ?? null) as Date | null,
-    expiresAt: (user.campusStatusExpiresAt ?? null) as Date | null,
+    status: user.campusStatus ?? null,
+    updatedAt: user.campusStatusUpdatedAt ?? null,
+    expiresAt: user.campusStatusExpiresAt ?? null,
   });
 
   const showCampusToViewer = campus.status !== null;
+
+  // ✅ FIXED POSTS COUNT (EXCLUDES ANONYMOUS)
+  const postsCount = await prisma.post.count({
+    where: {
+      authorId: user.id,
+      anonymous: false,
+    },
+  });
 
   const friendsCount = await prisma.friendship.count({
     where: { OR: [{ userAId: user.id }, { userBId: user.id }] },
@@ -241,7 +216,6 @@ export default async function UserPage(props: {
         <div className="flex items-start gap-4">
           <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full border bg-gray-100 overflow-hidden flex-shrink-0">
             {user.image ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={user.image}
                 alt={dict["profile.alt"]}
@@ -326,7 +300,7 @@ export default async function UserPage(props: {
         <div className="grid grid-cols-3 gap-2">
           <StatLink
             href={tabHref("posts")}
-            value={user._count.posts}
+            value={postsCount} // ✅ FIXED
             label={dict["profile.posts"]}
             active={activeTab === "posts"}
           />
