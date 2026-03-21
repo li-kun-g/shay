@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import AvatarUploader from "@/components/AvatarUploader";
 import { updateProfile } from "@/app/actions/updateProfile";
 import { setCampusPrefs } from "@/app/actions/setCampusPrefs";
 import { useI18n } from "@/components/LanguageProvider";
+import ImageCropper from "@/components/ImageCropper";
+import { uploadFiles } from "@/lib/uploadthing"; 
 
 const COLLEGES = [
   "Bang College of Business",
@@ -31,11 +32,12 @@ function isCampusDuration(v: any): v is CampusDuration {
 
 export default function ProfileSettingsPage() {
   const { t } = useI18n();
-
   const { data: session, status } = useSession();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Profile States
   const [image, setImage] = useState<string>("");
   const [statusText, setStatusText] = useState<string>("");
   const [major, setMajor] = useState<string>("");
@@ -43,9 +45,13 @@ export default function ProfileSettingsPage() {
   const [emoji, setEmoji] = useState<string>("☕");
   const [college, setCollege] = useState<College>("Bang College of Business");
 
-  const [campusVisibility, setCampusVisibility] =
-    useState<CampusVisibility>("EVERYONE");
+  // Campus States
+  const [campusVisibility, setCampusVisibility] = useState<CampusVisibility>("EVERYONE");
   const [campusDuration, setCampusDuration] = useState<CampusDuration>("2h");
+
+  // Cropper & Upload States
+  const [tempImage, setTempImage] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/signin");
@@ -64,13 +70,11 @@ export default function ProfileSettingsPage() {
         ? ""
         : String(u.yearOfStudy)
     );
-    setEmoji(u.emoji ?? "☕");
+    u.emoji && setEmoji(u.emoji);
 
     const incomingCollege = (u.college ?? "").trim();
     if ((COLLEGES as readonly string[]).includes(incomingCollege)) {
       setCollege(incomingCollege as College);
-    } else {
-      setCollege("Bang College of Business");
     }
 
     setCampusVisibility(
@@ -85,6 +89,36 @@ export default function ProfileSettingsPage() {
     const u: any = session?.user;
     return (u?.username as string | undefined) ?? undefined;
   }, [session]);
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const reader = new FileReader();
+      reader.onload = () => setTempImage(reader.result as string);
+      reader.readAsDataURL(e.target.files[0]);
+    }
+  };
+
+  const handleCropComplete = async (blob: Blob) => {
+    setTempImage(null);
+    setIsUploading(true);
+
+    try {
+      const file = new File([blob], "profile.jpg", { type: "image/jpeg" });
+
+      const res = await uploadFiles("avatarImage", {
+        files: [file],
+      });
+
+      if (res && res[0].url) {
+        setImage(res[0].url);
+      }
+    } catch (err) {
+      console.error("Upload failed", err);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   function onSave() {
     if (status !== "authenticated" || !session?.user) return;
@@ -113,18 +147,25 @@ export default function ProfileSettingsPage() {
 
   return (
     <main className="mx-auto max-w-md px-4 py-6 space-y-6">
+      {tempImage && (
+        <ImageCropper 
+          image={tempImage} 
+          onCropComplete={handleCropComplete} 
+          onCancel={() => setTempImage(null)} 
+        />
+      )}
+
       <div>
-        <h1 className="text-xl font-semibold">{t("settings.profile.editTitle")}</h1>
-        <p className="text-sm text-gray-500 mt-1">
+        <h1 className="text-xl font-semibold dark:text-white">{t("settings.profile.editTitle")}</h1>
+        <p className="text-sm text-gray-500 mt-1 dark:text-zinc-400">
           {t("settings.profile.editDesc")}
         </p>
       </div>
 
-      <div className="rounded-2xl border bg-white p-4 shadow-sm">
+      <div className="rounded-2xl border bg-white p-4 shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
         <div className="flex items-center gap-4">
-          <div className="h-24 w-24 rounded-full overflow-hidden border bg-gray-100 flex items-center justify-center shrink-0">
+          <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full border bg-gray-100 flex items-center justify-center dark:bg-zinc-800 dark:border-zinc-700">
             {image ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={image}
                 alt={t("settings.profile.previewAlt")}
@@ -133,30 +174,48 @@ export default function ProfileSettingsPage() {
             ) : (
               <span className="text-3xl">{emoji}</span>
             )}
+            {isUploading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              </div>
+            )}
           </div>
 
-          <div className="flex-1 min-w-0 w-full">
-            <AvatarUploader onUploaded={(url) => setImage(url)} />
+          <div className="flex-1 min-w-0">
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              accept="image/*" 
+              onChange={onFileChange} 
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="w-full rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium hover:bg-gray-50 transition active:scale-95 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            >
+              {isUploading ? t("settings.profile.saving") : "Change Photo"}
+            </button>
           </div>
         </div>
       </div>
 
-      <div className="rounded-2xl border bg-white p-4 shadow-sm space-y-3">
+      <div className="rounded-2xl border bg-white p-4 shadow-sm space-y-3 dark:bg-zinc-900 dark:border-zinc-800">
         <div>
-          <div className="text-base font-semibold">{t("settings.profile.campusTitle")}</div>
-          <div className="text-sm text-gray-500 mt-1">
+          <div className="text-base font-semibold dark:text-white">{t("settings.profile.campusTitle")}</div>
+          <div className="text-sm text-gray-500 mt-1 dark:text-zinc-400">
             {t("settings.profile.campusDesc")}
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-3">
           <div className="flex items-center justify-between gap-4">
-            <div className="text-sm text-gray-700">{t("settings.profile.visibleTo")}</div>
+            <div className="text-sm text-gray-700 dark:text-zinc-300">{t("settings.profile.visibleTo")}</div>
             <select
               value={campusVisibility}
               onChange={(e) => setCampusVisibility(e.target.value as CampusVisibility)}
               disabled={isPending}
-              className="w-56 rounded-xl border px-3 py-2 text-sm bg-white"
+              className="w-48 sm:w-56 rounded-xl border px-3 py-2 text-sm bg-white outline-none dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
             >
               <option value="ONLY_ME">{t("settings.option.onlyMe")}</option>
               <option value="FRIENDS">{t("settings.option.friends")}</option>
@@ -165,12 +224,12 @@ export default function ProfileSettingsPage() {
           </div>
 
           <div className="flex items-center justify-between gap-4">
-            <div className="text-sm text-gray-700">{t("settings.profile.expiresIn")}</div>
+            <div className="text-sm text-gray-700 dark:text-zinc-300">{t("settings.profile.expiresIn")}</div>
             <select
               value={campusDuration}
               onChange={(e) => setCampusDuration(e.target.value as CampusDuration)}
               disabled={isPending}
-              className="w-56 rounded-xl border px-3 py-2 text-sm bg-white"
+              className="w-48 sm:w-56 rounded-xl border px-3 py-2 text-sm bg-white outline-none dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
             >
               <option value="2h">{t("settings.profile.duration2h")}</option>
               <option value="4h">{t("settings.profile.duration4h")}</option>
@@ -186,20 +245,20 @@ export default function ProfileSettingsPage() {
           value={statusText}
           onChange={(e) => setStatusText(e.target.value)}
           maxLength={80}
-          className="w-full rounded-xl border px-3 py-2 text-sm"
+          className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-black dark:bg-zinc-900 dark:border-zinc-800 dark:text-white dark:focus:ring-white"
         />
 
         <input
           placeholder={t("settings.profile.majorPlaceholder")}
           value={major}
           onChange={(e) => setMajor(e.target.value)}
-          className="w-full rounded-xl border px-3 py-2 text-sm"
+          className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-black dark:bg-zinc-900 dark:border-zinc-800 dark:text-white dark:focus:ring-white"
         />
 
         <select
           value={college}
           onChange={(e) => setCollege(e.target.value as College)}
-          className="w-full rounded-xl border px-3 py-2 text-sm bg-white"
+          className="w-full rounded-xl border px-3 py-2 text-sm bg-white outline-none dark:bg-zinc-900 dark:border-zinc-800 dark:text-white"
         >
           <option value="Bang College of Business">{t("settings.profile.college.bcb")}</option>
           <option value="College of Social Sciences">{t("settings.profile.college.css")}</option>
@@ -214,20 +273,20 @@ export default function ProfileSettingsPage() {
           inputMode="numeric"
           value={yearOfStudy}
           onChange={(e) => setYearOfStudy(e.target.value)}
-          className="w-full rounded-xl border px-3 py-2 text-sm"
+          className="w-full rounded-xl border px-3 py-2 text-sm outline-none dark:bg-zinc-900 dark:border-zinc-800 dark:text-white"
         />
 
         <input
           placeholder={t("settings.profile.emojiPlaceholder")}
           value={emoji}
           onChange={(e) => setEmoji(e.target.value)}
-          className="w-full rounded-xl border px-3 py-2 text-sm"
+          className="w-full rounded-xl border px-3 py-2 text-sm outline-none dark:bg-zinc-900 dark:border-zinc-800 dark:text-white"
         />
 
         <button
           onClick={onSave}
-          disabled={isPending}
-          className="w-full rounded-xl bg-black px-4 py-2 text-sm text-white disabled:opacity-50"
+          disabled={isPending || isUploading}
+          className="w-full rounded-xl bg-black px-4 py-2 text-sm font-semibold text-white transition active:scale-[0.98] disabled:opacity-50 dark:bg-white dark:text-black"
         >
           {isPending ? t("settings.profile.saving") : t("settings.profile.saveChanges")}
         </button>

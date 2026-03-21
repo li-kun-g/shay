@@ -371,6 +371,7 @@ export type I18nKey =
 | "common.done"
 | "composer.sentToModeration"
 | "composer.moderationDesc"
+| "settings.profile.changePhoto"
 
 const DICTS: Record<Lang, Record<I18nKey, string>> = {
   EN: {
@@ -726,6 +727,7 @@ const DICTS: Record<Lang, Record<I18nKey, string>> = {
 "common.done": "Done",
     "composer.sentToModeration": "Your post sent for moderation",
     "composer.moderationDesc": "It will appear on the feed once it has been approved by the team!",
+    "settings.profile.changePhoto": "Change Photo",
   },
   RU: {
     "nav.feed": "Лента",
@@ -1080,6 +1082,7 @@ const DICTS: Record<Lang, Record<I18nKey, string>> = {
 "common.done": "Готово",
     "composer.sentToModeration": "Ваш пост отправлен на модерацию",
     "composer.moderationDesc": "Он появится в ленте после того, как команда одобрит его!",
+    "settings.profile.changePhoto": "Изменить фото",
   },
   KK: {
     "nav.feed": "Таспа",
@@ -1434,6 +1437,7 @@ const DICTS: Record<Lang, Record<I18nKey, string>> = {
 "common.done": "Дайын",
     "composer.sentToModeration": "Сіздің жазбаңыз модерацияға жіберілді",
     "composer.moderationDesc": "Ол команда мақұлдағаннан кейін лентада пайда болады!",
+      "settings.profile.changePhoto": "Фотоны өзгерту",
   },
 };
 
