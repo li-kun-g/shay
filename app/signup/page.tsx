@@ -20,7 +20,7 @@ export default function SignUpPage() {
   const [password, setPassword] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const [isSuccess, setIsSuccess] = useState(false); // New state for the success view
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const normalizedUsername = useMemo(
     () => normalizeUsername(username),
@@ -28,7 +28,8 @@ export default function SignUpPage() {
   );
 
   const normalizedEmail = useMemo(() => normalizeEmail(email), [email]);
-  const emailLooksValid = normalizedEmail.length > 0 && isKimepEmail(normalizedEmail);
+  const emailLooksValid =
+    normalizedEmail.length > 0 && isKimepEmail(normalizedEmail);
 
   function onSubmit() {
     setErr(null);
@@ -48,7 +49,7 @@ export default function SignUpPage() {
         });
 
         if (res.ok) {
-          setIsSuccess(true); // Show success screen instead of auto-login
+          setIsSuccess(true);
         }
       } catch (e: any) {
         setErr(e?.message || "Failed to sign up");
@@ -69,14 +70,19 @@ export default function SignUpPage() {
       <main className="min-h-[100vh] flex items-center justify-center px-4 bg-[#FAF7F2] dark:bg-black">
         <div className="w-full max-w-sm rounded-3xl border bg-white dark:bg-[#111] p-8 shadow-sm text-center border-gray-200 dark:border-white/10">
           <div className="text-4xl mb-4">📧</div>
-          <h1 className="text-2xl font-semibold tracking-tight">Check your email</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Check your email
+          </h1>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-3 leading-relaxed">
             We sent a confirmation link to <br />
-            <span className="font-semibold text-black dark:text-white">{normalizedEmail}</span>
+            <span className="font-semibold text-black dark:text-white">
+              {normalizedEmail}
+            </span>
           </p>
-          
+
           <div className="mt-6 rounded-2xl bg-amber-50 dark:bg-amber-900/20 p-4 border border-amber-100 dark:border-amber-900/30 text-xs text-amber-800 dark:text-amber-200">
-            <strong>Pro tip:</strong> If you don't see it, please check your <strong>Spam</strong> or Junk folder. The filters can be strict!
+            <strong>Pro tip:</strong> If you don't see it, please check your{" "}
+            <strong>Spam</strong> or Junk folder. The filters can be strict!
           </div>
 
           <Link
@@ -94,7 +100,9 @@ export default function SignUpPage() {
   return (
     <main className="min-h-[100vh] flex items-center justify-center px-4 bg-[#FAF7F2] dark:bg-black">
       <div className="w-full max-w-sm rounded-2xl border bg-white dark:bg-[#111] p-5 shadow-sm dark:border-white/10">
-        <h1 className="text-xl font-semibold dark:text-white">Create your Shay ☕</h1>
+        <h1 className="text-xl font-semibold dark:text-white">
+          Create your Shay ☕
+        </h1>
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
           Choose a unique username to join the campus tea.
         </p>
@@ -122,7 +130,10 @@ export default function SignUpPage() {
             />
             {username && (
               <p className="mt-1 text-xs text-gray-500">
-                Your profile: <span className="font-medium">/u/{normalizedUsername}</span>
+                Your profile:{" "}
+                <span className="font-medium">
+                  /u/{normalizedUsername}
+                </span>
               </p>
             )}
           </div>
@@ -142,16 +153,24 @@ export default function SignUpPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
-            <p className="mt-1 text-xs text-gray-500">Use @kimep.kz email</p>
+            <p className="mt-1 text-xs text-gray-500">
+              Use @kimep.kz email
+            </p>
           </div>
 
-          <input
-            className="w-full rounded-xl border dark:border-white/10 dark:bg-transparent px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
-            placeholder="Password (min 8 chars)"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <div>
+            <input
+              className="w-full rounded-xl border dark:border-white/10 dark:bg-transparent px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+              placeholder="Password (min 8 chars)"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+
+            <p className="mt-1 text-xs text-gray-500">
+              Use at least 8 characters. Avoid reusing passwords from email or other accounts.
+            </p>
+          </div>
 
           <button
             onClick={onSubmit}
