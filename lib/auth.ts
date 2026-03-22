@@ -4,18 +4,20 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
+import { headers } from "next/headers";
+import { ipLimiter, emailLimiter } from "@/lib/rateLimit";
+
 type CampusDurationDb = "H2" | "H4" | "EOD";
 type CampusDurationUI = "2h" | "4h" | "eod";
 
 function toUiDuration(d: CampusDurationDb | null | undefined): CampusDurationUI {
   if (d === "H4") return "4h";
   if (d === "EOD") return "eod";
-  return "2h"; // default for H2/null/undefined
+  return "2h";
 }
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
-
   session: { strategy: "jwt" },
 
   providers: [
@@ -27,9 +29,31 @@ export const authOptions: NextAuthOptions = {
       },
 
       async authorize(credentials) {
+        const h = await headers();
+
+        const ip =
+          h.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+          h.get("x-real-ip") ||
+          "unknown";
+
         const email = credentials?.email?.trim().toLowerCase();
         const password = credentials?.password ?? "";
-        if (!email || !password) return null;
+
+        if (!email || !password) {
+          throw new Error("INVALID_CREDENTIALS");
+        }
+
+        // 🔐 IP LIMIT
+        const ipCheck = await ipLimiter.limit(ip);
+        if (!ipCheck.success) {
+          throw new Error("TOO_MANY_REQUESTS");
+        }
+
+        // 🔐 EMAIL LIMIT
+        const emailCheck = await emailLimiter.limit(email);
+        if (!emailCheck.success) {
+          throw new Error("TOO_MANY_REQUESTS");
+        }
 
         const user = await prisma.user.findUnique({
           where: { email },
@@ -54,11 +78,17 @@ export const authOptions: NextAuthOptions = {
           },
         });
 
-        if (!user?.passwordHash) return null;
-        if (!user.emailVerified) return null;
+        if (!user?.passwordHash || !user.emailVerified) {
+          await new Promise((res) => setTimeout(res, 800));
+          throw new Error("INVALID_CREDENTIALS");
+        }
 
         const ok = await bcrypt.compare(password, user.passwordHash);
-        if (!ok) return null;
+
+        if (!ok) {
+          await new Promise((res) => setTimeout(res, 800));
+          throw new Error("INVALID_CREDENTIALS");
+        }
 
         return {
           id: user.id,
@@ -120,29 +150,29 @@ export const authOptions: NextAuthOptions = {
 
       if (!dbUser) return session;
 
-      (session.user as any).id = dbUser.id;
-      (session.user as any).email = dbUser.email;
-      (session.user as any).username = dbUser.username;
-      (session.user as any).name = dbUser.name ?? "Student";
-
-      (session.user as any).image = dbUser.image ?? "";
-      (session.user as any).status = dbUser.status ?? "";
-      (session.user as any).major = dbUser.major ?? "";
-      (session.user as any).yearOfStudy = dbUser.yearOfStudy ?? null;
-      (session.user as any).emoji = dbUser.emoji ?? "☕";
-      (session.user as any).college = dbUser.college ?? "";
-      (session.user as any).kimepId = dbUser.kimepId ?? "";
-
-      (session.user as any).campusStatusVisibility =
-        dbUser.campusStatusVisibility ?? "EVERYONE";
-      (session.user as any).campusStatusDuration = toUiDuration(
-        (dbUser.campusStatusDuration ?? null) as CampusDurationDb | null
-      );
+      Object.assign(session.user, {
+        id: dbUser.id,
+        email: dbUser.email,
+        username: dbUser.username,
+        name: dbUser.name ?? "Student",
+        image: dbUser.image ?? "",
+        status: dbUser.status ?? "",
+        major: dbUser.major ?? "",
+        yearOfStudy: dbUser.yearOfStudy ?? null,
+        emoji: dbUser.emoji ?? "☕",
+        college: dbUser.college ?? "",
+        kimepId: dbUser.kimepId ?? "",
+        campusStatusVisibility:
+          dbUser.campusStatusVisibility ?? "EVERYONE",
+        campusStatusDuration: toUiDuration(
+          (dbUser.campusStatusDuration ?? null) as CampusDurationDb | null
+        ),
+      });
 
       return session;
     },
   },
 
   secret: process.env.NEXTAUTH_SECRET,
-  debug: true,
+  debug: false,
 };

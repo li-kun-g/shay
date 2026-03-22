@@ -17,18 +17,41 @@ export default function SignInPage() {
       const res = await signIn("credentials", {
         email,
         password,
-        callbackUrl: "/",
-        redirect: true,
+        redirect: false, // 🔥 ВАЖНО
       });
 
-      if ((res as any)?.error) setErr("Wrong email or password");
+      if (!res) {
+        setErr("Something went wrong. Try again.");
+        return;
+      }
+
+      // 🔐 обработка ошибок (как в Instagram)
+      if (res.error === "INVALID_CREDENTIALS") {
+        setErr("Wrong email or password");
+        return;
+      }
+
+      if (res.error === "TOO_MANY_REQUESTS") {
+        setErr("Too many attempts. Try again later.");
+        return;
+      }
+
+      if (res.error) {
+        setErr("Login failed. Try again.");
+        return;
+      }
+
+      // ✅ успех → редирект вручную
+      window.location.href = "/";
     });
   }
 
   return (
     <main className="min-h-[100vh] flex items-center justify-center px-4 bg-[#FAF7F2] dark:bg-black transition-colors">
       <div className="w-full max-w-sm rounded-3xl border bg-white dark:bg-[#111] p-8 shadow-sm border-gray-200 dark:border-white/10 transition-all">
-        <h1 className="text-2xl font-semibold tracking-tight dark:text-white">Welcome back ☕</h1>
+        <h1 className="text-2xl font-semibold tracking-tight dark:text-white">
+          Welcome back ☕
+        </h1>
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
           Log in to spill your tea.
         </p>
@@ -58,7 +81,7 @@ export default function SignInPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            {/* Added Forgot Password Link Here */}
+
             <div className="mt-2 flex justify-end">
               <Link
                 href="/forgot-password"
@@ -79,7 +102,10 @@ export default function SignInPage() {
 
           <p className="text-sm text-gray-600 dark:text-gray-400 text-center mt-4">
             No account?{" "}
-            <Link className="underline text-black dark:text-white font-medium" href="/signup">
+            <Link
+              className="underline text-black dark:text-white font-medium"
+              href="/signup"
+            >
               Sign up
             </Link>
           </p>
