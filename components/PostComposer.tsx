@@ -11,7 +11,7 @@ import { useSession, signIn } from "next-auth/react";
 type PostCategory = "GOSSIPS" | "UNI" | "CONFESSIONS" | "MARKET" | "OTHER";
 
 const CATS: { label: string; value: PostCategory }[] = [
-  { label: "Shai gossips", value: "GOSSIPS" },
+  { label: "Shay gossips", value: "GOSSIPS" },
   { label: "Uni stuff", value: "UNI" },
   { label: "Confessions", value: "CONFESSIONS" },
   { label: "Market", value: "MARKET" },

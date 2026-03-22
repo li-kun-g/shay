@@ -405,7 +405,7 @@ const DICTS: Record<Lang, Record<I18nKey, string>> = {
     "composer.photoOnlyNonAnon": "Photos are available only for non-anonymous posts",
     "common.close": "Close",
     "common.clear": "Clear",
-    "cat.gossips": "Shai gossips",
+    "cat.gossips": "Shay gossips",
     "cat.uni": "Uni stuff",
     "cat.confessions": "Confessions",
     "cat.market": "Market",
