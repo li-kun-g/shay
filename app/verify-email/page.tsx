@@ -78,14 +78,14 @@ export default async function VerifyEmailPage(props: {
       <div className="text-4xl mb-4">✅</div>
       <h1 className="text-2xl font-semibold tracking-tight dark:text-white">Email verified</h1>
       <p className="text-sm text-gray-600 dark:text-gray-400 mt-3 leading-relaxed">
-        Your account is now active. You can now log in and join the KIMEP community ☕
+        Your account is now active. You can now log in and join the Shay community ☕
       </p>
 
       <Link
         href="/signin"
         className="mt-8 block w-full rounded-xl bg-black dark:bg-white dark:text-black px-4 py-3 text-sm font-medium text-white transition hover:opacity-90"
       >
-        Sign in to KIMEPish
+        Sign in to Shay
       </Link>
     </Container>
   );

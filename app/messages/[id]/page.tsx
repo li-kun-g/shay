@@ -108,7 +108,7 @@ export default async function ThreadPage(props: {
 
         {support && (
           <div className="text-xs text-gray-500 mt-1">
-            Contact KIMEPish administration for reports, suggestions, and complaints.
+            Contact Shay administration for reports, suggestions, and complaints.
           </div>
         )}
       </div>

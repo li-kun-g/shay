@@ -94,7 +94,7 @@ export default function PostComposer() {
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="What’s the tea at KIMEP today? ☕"
+          placeholder="What’s the tea today? ☕"
           className="w-full resize-none outline-none text-base bg-transparent dark:text-white"
           rows={3}
           maxLength={max + 50}

@@ -94,7 +94,7 @@ export default function SignUpPage() {
   return (
     <main className="min-h-[100vh] flex items-center justify-center px-4 bg-[#FAF7F2] dark:bg-black">
       <div className="w-full max-w-sm rounded-2xl border bg-white dark:bg-[#111] p-5 shadow-sm dark:border-white/10">
-        <h1 className="text-xl font-semibold dark:text-white">Create your KIMEPish ☕</h1>
+        <h1 className="text-xl font-semibold dark:text-white">Create your Shay ☕</h1>
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
           Choose a unique username to join the campus tea.
         </p>

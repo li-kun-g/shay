@@ -57,7 +57,7 @@ export default function Navbar() {
                   href="/"
                   className="font-semibold text-lg flex items-center gap-2 rounded-xl px-2 py-1 hover:bg-gray-50 dark:hover:bg-white/10 dark:text-white"
                 >
-                  <span>KIMEPish</span>
+                  <span>Shay</span>
                   <span className="text-base">☕</span>
                 </Link>
               )}
@@ -70,7 +70,7 @@ export default function Navbar() {
                   href="/"
                   className="font-semibold text-lg flex items-center gap-2 rounded-xl px-2 py-1 hover:bg-gray-50 dark:hover:bg-white/10 dark:text-white"
                 >
-                  <span>KIMEPish</span>
+                  <span>Shay</span>
                   <span className="text-base">☕</span>
                 </Link>
               </div>
@@ -139,7 +139,7 @@ export default function Navbar() {
 
           <div className="absolute left-0 top-0 h-full w-4/5 max-w-xs bg-white border-r shadow-xl dark:bg-black dark:border-white/10">
             <div className="flex items-center justify-between px-4 py-3 border-b dark:border-white/10">
-              <span className="font-semibold dark:text-white">KIMEPish ☕</span>
+              <span className="font-semibold dark:text-white">Shay ☕</span>
               <button
                 className="rounded-full border px-3 py-1 text-sm hover:bg-gray-50 dark:hover:bg-white/10 dark:text-white"
                 onClick={() => setOpen(false)}

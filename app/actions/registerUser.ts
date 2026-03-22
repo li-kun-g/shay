@@ -99,10 +99,10 @@ export async function registerUser(input: {
 
  await sendEmail({
     to: email,
-    subject: "Verify your KIMEPish account ☕",
+    subject: "Verify your Shay account ☕",
     html: `
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111; max-width: 600px; margin: 0 auto;">
-        <h2 style="font-size: 24px; font-weight: bold; margin-bottom: 20px;">Welcome to KIMEPish ☕</h2>
+        <h2 style="font-size: 24px; font-weight: bold; margin-bottom: 20px;">Welcome to Shay ☕</h2>
         <p>Hi ${name},</p>
         <p>Please verify your email to activate your account and start joining the campus tea:</p>
         
@@ -123,7 +123,7 @@ export async function registerUser(input: {
         </p>
 
         <p style="color: #999; font-size: 12px; margin-top: 30px;">
-          This link expires in 30 minutes. If you didn’t sign up for KIMEPish, you can safely ignore this email.
+          This link expires in 30 minutes. If you didn’t sign up for Shay, you can safely ignore this email.
         </p>
       </div>
     `,

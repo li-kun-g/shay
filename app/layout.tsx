@@ -26,8 +26,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "KIMEPish ☕",
-  description: "KIMEP student social network",
+  title: "Shay ☕",
+  description: "The limited edition's social network",
 };
 
 const LANG_COOKIE = "kimepish-lang";

@@ -95,7 +95,7 @@ export default async function SettingsPage() {
           </div>
 
           <div className="rounded-2xl border bg-gray-50 px-3 py-2 text-sm text-gray-600">
-            ⚙️ KIMEPish
+            ⚙️ Shay
           </div>
         </div>
       </section>

@@ -40,13 +40,13 @@ export async function requestPasswordReset(formData: FormData) {
 const resetLink = `${baseUrl}/reset-password?token=${token}`;
 
     await resend.emails.send({
-      from: "auth@kimepish.kz",
+      from: "auth@shay.kz",
       to: email,
-      subject: "Reset your KIMEPish password",
+      subject: "Reset your Shay password",
       html: `
         <div style="font-family: sans-serif; max-width: 600px; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
           <h2 style="color: #111;">Password Reset Request</h2>
-          <p>We received a request to reset your password for your KIMEPish account.</p>
+          <p>We received a request to reset your password for your Shay account.</p>
           <p>Click the button below to set a new one. This link expires in 1 hour.</p>
           <a href="${resetLink}" style="background: black; color: white; padding: 12px 24px; text-decoration: none; border-radius: 99px; display: inline-block; margin: 20px 0; font-weight: 500;">Reset Password</a>
           <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
