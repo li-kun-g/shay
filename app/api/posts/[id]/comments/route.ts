@@ -1,3 +1,4 @@
+// app/api/posts/[id]/comments/route.ts
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -83,20 +84,41 @@ export async function GET(
   const items = rows
     .slice()
     .reverse()
-    .map((c) => ({
-      id: c.id,
-      content: c.content,
-      anonymous: c.anonymous,
-      createdAt: c.createdAt.toISOString(),
-      authorId: c.authorId,
-      author: {
-        id: c.author.id,
-        username: c.author.username,
-        name: c.author.name,
-        image: c.author.image,
-        emoji: c.author.emoji,
-      },
-    }));
+    .map((c) => {
+      // Полностью скрываем реального автора, если комментарий анонимный
+      if (c.anonymous) {
+        return {
+          id: c.id,
+          content: c.content,
+          anonymous: true,
+          createdAt: c.createdAt.toISOString(),
+          authorId: "anonymous", 
+          author: {
+            id: "anonymous",
+            username: "anonymous",
+            name: "Anonymous",
+            image: null,
+            emoji: "🔥", 
+          },
+        };
+      }
+
+      // Возвращаем реальные данные для обычных комментариев
+      return {
+        id: c.id,
+        content: c.content,
+        anonymous: false,
+        createdAt: c.createdAt.toISOString(),
+        authorId: c.authorId,
+        author: {
+          id: c.author.id,
+          username: c.author.username,
+          name: c.author.name,
+          image: c.author.image,
+          emoji: c.author.emoji,
+        },
+      };
+    });
 
   let nextCursor: string | null = null;
   if (rows.length === TAKE) {

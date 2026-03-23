@@ -1,3 +1,4 @@
+// app/actions/getComments.ts
 "use server";
 
 import { prisma } from "@/lib/prisma";
@@ -42,18 +43,39 @@ export async function getComments(postId: string) {
     },
   });
 
-  return comments.map((c) => ({
-    id: c.id,
-    content: c.content,
-    anonymous: c.anonymous,
-    createdAt: c.createdAt,
-    authorId: c.authorId,
-    author: {
-      id: c.author.id,
-      username: c.author.username,
-      name: c.author.name,
-      emoji: c.author.emoji,
-      image: c.author.image,
-    },
-  }));
+  return comments.map((c) => {
+    // Полностью скрываем реального автора, если комментарий анонимный
+    if (c.anonymous) {
+      return {
+        id: c.id,
+        content: c.content,
+        anonymous: true,
+        createdAt: c.createdAt,
+        authorId: "anonymous",
+        author: {
+          id: "anonymous",
+          username: "anonymous",
+          name: "Anonymous",
+          emoji: "🔥",
+          image: null,
+        },
+      };
+    }
+
+    // Возвращаем реальные данные для обычных комментариев
+    return {
+      id: c.id,
+      content: c.content,
+      anonymous: false,
+      createdAt: c.createdAt,
+      authorId: c.authorId,
+      author: {
+        id: c.author.id,
+        username: c.author.username,
+        name: c.author.name,
+        emoji: c.author.emoji,
+        image: c.author.image,
+      },
+    };
+  });
 }
