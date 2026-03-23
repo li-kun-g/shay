@@ -38,12 +38,17 @@ export default function ProfileSettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Profile States
+  const [name, setName] = useState<string>(""); // ✅ NEW
+  const [username, setUsername] = useState<string>(""); // ✅ NEW
   const [image, setImage] = useState<string>("");
   const [statusText, setStatusText] = useState<string>("");
   const [major, setMajor] = useState<string>("");
   const [yearOfStudy, setYearOfStudy] = useState<string>("");
   const [emoji, setEmoji] = useState<string>("☕");
   const [college, setCollege] = useState<College>("Bang College of Business");
+
+  // Error State
+  const [errorMsg, setErrorMsg] = useState<string | null>(null); // ✅ NEW
 
   // Campus States
   const [campusVisibility, setCampusVisibility] = useState<CampusVisibility>("EVERYONE");
@@ -62,6 +67,8 @@ export default function ProfileSettingsPage() {
 
     const u: any = session.user;
 
+    setName(u.name ?? "");
+    setUsername(u.username ?? "");
     setImage(u.image ?? "");
     setStatusText(u.status ?? "");
     setMajor(u.major ?? "");
@@ -84,11 +91,6 @@ export default function ProfileSettingsPage() {
       isCampusDuration(u.campusStatusDuration) ? u.campusStatusDuration : "2h"
     );
   }, [status, session]);
-
-  const username = useMemo(() => {
-    const u: any = session?.user;
-    return (u?.username as string | undefined) ?? undefined;
-  }, [session]);
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -122,9 +124,12 @@ export default function ProfileSettingsPage() {
 
   function onSave() {
     if (status !== "authenticated" || !session?.user) return;
+    setErrorMsg(null); // Clear previous errors
 
     startTransition(async () => {
-      await updateProfile({
+      const res = await updateProfile({
+        name: name || undefined,
+        username: username || undefined,
         image: image || undefined,
         status: statusText || undefined,
         major: major || undefined,
@@ -133,12 +138,20 @@ export default function ProfileSettingsPage() {
         college,
       });
 
+      // ✅ Если сервер вернул ошибку, показываем ее и не переходим
+      if (res && res.error) {
+        setErrorMsg(res.error);
+        return; 
+      }
+
       await setCampusPrefs({
         visibility: campusVisibility,
         duration: campusDuration,
       });
 
-      router.push(username ? `/u/${username}` : "/");
+      // ✅ Перенаправляем на актуальный юзернейм (если поменяли)
+      const finalUsername = res?.username || (session.user as any).username;
+      router.push(finalUsername ? `/u/${finalUsername}` : "/");
       router.refresh();
     });
   }
@@ -161,6 +174,13 @@ export default function ProfileSettingsPage() {
           {t("settings.profile.editDesc")}
         </p>
       </div>
+
+      {/* Вывод ошибки, если юзернейм занят */}
+      {errorMsg && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400">
+          {errorMsg}
+        </div>
+      )}
 
       <div className="rounded-2xl border bg-white p-4 shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
         <div className="flex items-center gap-4">
@@ -240,13 +260,38 @@ export default function ProfileSettingsPage() {
       </div>
 
       <div className="space-y-3">
-        <input
-          placeholder={t("settings.profile.statusPlaceholder")}
-          value={statusText}
-          onChange={(e) => setStatusText(e.target.value)}
-          maxLength={80}
-          className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-black dark:bg-zinc-900 dark:border-zinc-800 dark:text-white dark:focus:ring-white"
-        />
+        {/* ✅ NEW: Name field */}
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-gray-500 dark:text-zinc-400 ml-1">Name</label>
+          <input
+            placeholder="Full Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-black dark:bg-zinc-900 dark:border-zinc-800 dark:text-white dark:focus:ring-white"
+          />
+        </div>
+
+        {/* ✅ NEW: Username field */}
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-gray-500 dark:text-zinc-400 ml-1">Username</label>
+          <input
+            placeholder="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value.toLowerCase())} // Принудительно в нижний регистр
+            className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-black dark:bg-zinc-900 dark:border-zinc-800 dark:text-white dark:focus:ring-white"
+          />
+        </div>
+
+        <div className="space-y-1 mt-2">
+          <label className="text-xs font-medium text-gray-500 dark:text-zinc-400 ml-1">Bio / Status</label>
+          <input
+            placeholder={t("settings.profile.statusPlaceholder")}
+            value={statusText}
+            onChange={(e) => setStatusText(e.target.value)}
+            maxLength={80}
+            className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-black dark:bg-zinc-900 dark:border-zinc-800 dark:text-white dark:focus:ring-white"
+          />
+        </div>
 
         <input
           placeholder={t("settings.profile.majorPlaceholder")}
@@ -268,25 +313,27 @@ export default function ProfileSettingsPage() {
           <option value="Other">{t("settings.profile.college.other")}</option>
         </select>
 
-        <input
-          placeholder={t("settings.profile.yearPlaceholder")}
-          inputMode="numeric"
-          value={yearOfStudy}
-          onChange={(e) => setYearOfStudy(e.target.value)}
-          className="w-full rounded-xl border px-3 py-2 text-sm outline-none dark:bg-zinc-900 dark:border-zinc-800 dark:text-white"
-        />
+        <div className="flex gap-3">
+          <input
+            placeholder={t("settings.profile.yearPlaceholder")}
+            inputMode="numeric"
+            value={yearOfStudy}
+            onChange={(e) => setYearOfStudy(e.target.value)}
+            className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-black dark:bg-zinc-900 dark:border-zinc-800 dark:text-white dark:focus:ring-white"
+          />
 
-        <input
-          placeholder={t("settings.profile.emojiPlaceholder")}
-          value={emoji}
-          onChange={(e) => setEmoji(e.target.value)}
-          className="w-full rounded-xl border px-3 py-2 text-sm outline-none dark:bg-zinc-900 dark:border-zinc-800 dark:text-white"
-        />
+          <input
+            placeholder={t("settings.profile.emojiPlaceholder")}
+            value={emoji}
+            onChange={(e) => setEmoji(e.target.value)}
+            className="w-24 shrink-0 text-center rounded-xl border px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-black dark:bg-zinc-900 dark:border-zinc-800 dark:text-white dark:focus:ring-white"
+          />
+        </div>
 
         <button
           onClick={onSave}
           disabled={isPending || isUploading}
-          className="w-full rounded-xl bg-black px-4 py-2 text-sm font-semibold text-white transition active:scale-[0.98] disabled:opacity-50 dark:bg-white dark:text-black"
+          className="mt-4 w-full rounded-xl bg-black px-4 py-3 text-sm font-semibold text-white transition active:scale-[0.98] disabled:opacity-50 dark:bg-white dark:text-black"
         >
           {isPending ? t("settings.profile.saving") : t("settings.profile.saveChanges")}
         </button>
