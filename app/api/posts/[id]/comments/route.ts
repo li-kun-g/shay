@@ -3,25 +3,11 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { PostStatus } from "@prisma/client";
 
 const TAKE = 60;
 
 type CursorValue = { createdAt: string; id: string } | null;
-
-type CommentRow = {
-  id: string;
-  content: string;
-  anonymous: boolean;
-  createdAt: Date;
-  authorId: string;
-  author: {
-    id: string;
-    username: string;
-    name: string | null;
-    image: string | null;
-    emoji: string;
-  };
-};
 
 function decodeCursor(cursor: string | null): CursorValue {
   if (!cursor) return null;
@@ -50,7 +36,12 @@ export async function GET(
   const { searchParams } = new URL(req.url);
   const cursor = decodeCursor(searchParams.get("cursor"));
 
-  let where: Record<string, unknown> = { postId };
+  // Базовое условие: только одобренные комментарии к конкретному посту
+  let where: any = { 
+    postId,
+    status: PostStatus.APPROVED 
+  };
+  
   const orderBy: Array<Record<string, unknown>> = [
     { createdAt: "desc" },
     { id: "desc" },
@@ -59,6 +50,7 @@ export async function GET(
   if (cursor?.createdAt && cursor?.id) {
     const cDate = new Date(cursor.createdAt);
     where = {
+      status: PostStatus.APPROVED,
       AND: [
         { postId },
         {
@@ -71,7 +63,7 @@ export async function GET(
     };
   }
 
-  const rows: CommentRow[] = await prisma.comment.findMany({
+  const rows = await prisma.comment.findMany({
     where,
     orderBy,
     take: TAKE,
@@ -91,7 +83,7 @@ export async function GET(
   const items = rows
     .slice()
     .reverse()
-    .map((c: CommentRow) => ({
+    .map((c) => ({
       id: c.id,
       content: c.content,
       anonymous: c.anonymous,

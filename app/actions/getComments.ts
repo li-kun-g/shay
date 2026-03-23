@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { PostStatus } from "@prisma/client";
 
 type CommentRow = {
   id: string;
@@ -8,6 +9,7 @@ type CommentRow = {
   anonymous: boolean;
   createdAt: Date;
   authorId: string;
+  status: string;
   author: {
     id: string;
     username: string;
@@ -21,8 +23,11 @@ export async function getComments(postId: string) {
   const id = (postId ?? "").trim();
   if (!id) return [];
 
-  const comments: CommentRow[] = await prisma.comment.findMany({
-    where: { postId: id },
+  const comments = await prisma.comment.findMany({
+    where: { 
+      postId: id,
+      status: PostStatus.APPROVED 
+    },
     orderBy: { createdAt: "asc" },
     include: {
       author: {
@@ -37,7 +42,7 @@ export async function getComments(postId: string) {
     },
   });
 
-  return comments.map((c: CommentRow) => ({
+  return comments.map((c) => ({
     id: c.id,
     content: c.content,
     anonymous: c.anonymous,

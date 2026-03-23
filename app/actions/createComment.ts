@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { PostStatus } from "@prisma/client";
 
 type NotificationType =
   | "FRIEND_REQUEST"
@@ -69,16 +70,22 @@ export async function createComment(input: {
   });
   if (!post) throw new Error("Post not found");
 
+  // Устанавливаем статус в зависимости от анонимности
+  const status = input.anonymous ? PostStatus.PENDING : PostStatus.APPROVED;
+
   await prisma.comment.create({
     data: {
       postId,
       content,
       anonymous: input.anonymous,
       authorId: me.id,
+      status,
     },
   });
 
-  if (post.authorId !== me.id) {
+  // Уведомление отправляем только если комментарий НЕ анонимный (сразу одобрен)
+  // Анонимные уведомления лучше отправлять в экшене админки при апруве
+  if (post.authorId !== me.id && status === PostStatus.APPROVED) {
     await createNotificationSafe({
       userId: post.authorId,
       type: "POST_REPLY",
@@ -96,6 +103,7 @@ export async function createComment(input: {
   revalidatePath("/");
   revalidatePath("/u");
   revalidatePath(`/u/${me.username}`);
+  revalidatePath(`/post/${postId}`);
 
-  return { ok: true };
+  return { ok: true, pending: input.anonymous };
 }

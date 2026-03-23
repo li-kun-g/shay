@@ -145,7 +145,18 @@ export async function GET(req: Request) {
       postReactions: myId
         ? { where: { userId: myId }, select: { userId: true, type: true } }
         : { where: { userId: "__nope__" }, select: { userId: true, type: true } },
-      _count: { select: { likes: true, comments: true } },
+      
+      // ✅ ИСПРАВЛЕНИЕ ЗДЕСЬ: Считаем только APPROVED комментарии
+      _count: { 
+        select: { 
+          likes: true, 
+          comments: {
+            where: {
+              status: "APPROVED"
+            }
+          } 
+        } 
+      },
     },
   });
 
