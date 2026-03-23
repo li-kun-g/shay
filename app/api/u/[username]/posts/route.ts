@@ -128,7 +128,15 @@ export async function GET(
             where: { userId: "__nope__" },
             select: { userId: true, type: true },
           },
-      _count: { select: { likes: true, comments: true } },
+      // ✅ Исправлено: Считаем только одобренные комментарии
+      _count: { 
+        select: { 
+          likes: true, 
+          comments: {
+            where: { status: "APPROVED" }
+          } 
+        } 
+      },
     },
   });
 
