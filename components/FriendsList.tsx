@@ -15,15 +15,28 @@ type FriendLite = {
   campusStatusExpiresAt: string | Date | null;
 };
 
-function isOnCampusNow(friend: FriendLite) {
-  if (!friend.campusStatus) return false;
+/**
+ * Определяет текущее состояние статуса: "ON", "OFF" или null (скрыть)
+ */
+function getActiveCampusStatus(friend: FriendLite): "ON" | "OFF" | null {
+  if (!friend.campusStatus) return null;
 
-  if (!friend.campusStatusExpiresAt) return true;
+  // Проверяем срок действия
+  if (friend.campusStatusExpiresAt) {
+    const exp = new Date(friend.campusStatusExpiresAt);
+    if (!Number.isNaN(exp.getTime()) && exp.getTime() <= Date.now()) {
+      return null; // Время вышло — скрываем статус
+    }
+  }
 
-  const exp = new Date(friend.campusStatusExpiresAt);
-  if (Number.isNaN(exp.getTime())) return false;
+  // Если статус "OFF" (строка), возвращаем его как есть
+  if (friend.campusStatus === "OFF") return "OFF";
+  
+  // Если статус "ON", возвращаем его
+  if (friend.campusStatus === "ON") return "ON";
 
-  return exp.getTime() > Date.now();
+  // На случай, если в базе другие значения
+  return null;
 }
 
 export default function FriendsList({ friends }: { friends: FriendLite[] }) {
@@ -40,14 +53,15 @@ export default function FriendsList({ friends }: { friends: FriendLite[] }) {
 
     return friends.filter((f) => {
       const matchesSearch = !needle || f.username.toLowerCase().includes(needle);
+      
+      const currentStatus = getActiveCampusStatus(f);
 
-      const onCampus = isOnCampusNow(f);
       const matchesCampus =
         campusFilter === "all"
           ? true
           : campusFilter === "on"
-            ? onCampus
-            : !onCampus;
+            ? currentStatus === "ON"
+            : currentStatus === "OFF";
 
       return matchesSearch && matchesCampus;
     });
@@ -111,7 +125,7 @@ export default function FriendsList({ friends }: { friends: FriendLite[] }) {
       ) : (
         <div className="space-y-3">
           {filtered.map((f) => {
-            const onCampus = isOnCampusNow(f);
+            const currentStatus = getActiveCampusStatus(f);
 
             return (
               <div
@@ -123,17 +137,20 @@ export default function FriendsList({ friends }: { friends: FriendLite[] }) {
                     @{f.username}
                   </Link>
 
-                  <div className="mt-1">
-                    <span
-                      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs ${
-                        onCampus
-                          ? "border-green-200 bg-green-50 text-green-700"
-                          : "border-gray-200 bg-gray-50 text-gray-500"
-                      }`}
-                    >
-                      {onCampus ? t("friends.onCampus") : t("friends.offCampus")}
-                    </span>
-                  </div>
+                  {/* Рендерим плашку только если статус активен (ON или OFF) */}
+                  {currentStatus && (
+                    <div className="mt-1">
+                      <span
+                        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs ${
+                          currentStatus === "ON"
+                            ? "border-green-200 bg-green-50 text-green-700"
+                            : "border-gray-200 bg-gray-50 text-gray-500"
+                        }`}
+                      >
+                        {currentStatus === "ON" ? t("friends.onCampus") : t("friends.offCampus")}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <button
