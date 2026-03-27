@@ -14,11 +14,15 @@ const DM_VALUES = new Set<DmPrivacy>(["EVERYONE", "FRIENDS_ONLY"]);
 
 export async function updateAccountPrivacy(formData: FormData) {
   const session = await getServerSession(authOptions);
-  if (!session?.user || !("id" in session.user)) {
+
+  // 1. Fixed TypeScript error: explicit return prevents "possibly null" warning
+  if (!session?.user) {
     redirect("/signin");
+    return; 
   }
 
-  const myId = session.user.id as string;
+  // 2. Safe access to the user ID from your session callback
+  const myId = (session.user as any).id as string;
 
   const friendsListVisibilityRaw = String(formData.get("friendsListVisibility") ?? "");
   const groupsVisibilityRaw = String(formData.get("groupsVisibility") ?? "");
@@ -48,9 +52,13 @@ export async function updateAccountPrivacy(formData: FormData) {
     select: { username: true },
   });
 
+  // 3. Revalidate tells Next.js to refresh the data cache
   revalidatePath("/settings/privacy");
   revalidatePath("/u");
-  if (updated.username) revalidatePath(`/u/${updated.username}`);
+  if (updated.username) {
+    revalidatePath(`/u/${updated.username}`);
+  }
 
-  redirect("/settings/privacy");
+  // 4. Removed final redirect. 
+  // This allows the Client Component state to stay alive and show the success box!
 }

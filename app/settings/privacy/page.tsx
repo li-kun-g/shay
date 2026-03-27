@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { updateAccountPrivacy } from "@/app/actions/updateAccountPrivacy";
 import { cookies } from "next/headers";
 import { getDict, type Lang } from "@/lib/i18n";
+import SavePrivacyButton from "@/components/SavePrivacyButton";
 
 function SelectRow(props: {
   name: string;
@@ -49,7 +50,7 @@ export default async function PrivacySettingsPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user || !("id" in session.user)) return null;
 
-  const myId = session.user.id as string;
+  const myId = (session.user as any).id as string;
 
   const cookieLang = (await cookies()).get(LANG_COOKIE)?.value as Lang | undefined;
   let lang: Lang = cookieLang && ["EN", "RU", "KK"].includes(cookieLang) ? cookieLang : "EN";
@@ -69,6 +70,9 @@ export default async function PrivacySettingsPage() {
 
   const dict = getDict(lang);
 
+  // This key forces the form to re-render with fresh data once Prisma is updated
+  const formKey = `${me.friendsListVisibility}-${me.groupsVisibility}-${me.dmPrivacy}`;
+
   return (
     <main className="mx-auto max-w-md px-4 py-6 md:max-w-2xl space-y-4">
       <Link href="/settings" className="text-sm text-gray-500 hover:underline">
@@ -82,7 +86,8 @@ export default async function PrivacySettingsPage() {
         </p>
       </section>
 
-      <form action={updateAccountPrivacy} className="space-y-4">
+      {/* Added key={formKey} to keep UI in sync with Server data */}
+      <form key={formKey} action={updateAccountPrivacy} className="space-y-4">
         <SelectRow
           name="friendsListVisibility"
           title={dict["settings.privacy.friendsList.title"]}
@@ -116,14 +121,10 @@ export default async function PrivacySettingsPage() {
           ]}
         />
 
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            className="rounded-xl bg-black px-4 py-2 text-sm text-white hover:opacity-90"
-          >
-            {dict["settings.privacy.save"]}
-          </button>
-        </div>
+        <SavePrivacyButton 
+          saveText={dict["settings.privacy.save"]} 
+          savedText="Changes saved" 
+        />
       </form>
     </main>
   );
