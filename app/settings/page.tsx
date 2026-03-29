@@ -55,12 +55,7 @@ export default async function SettingsPage() {
       emoji: "👥",
       badge: dict["settings.groups.badge"],
     },
-    {
-      title: dict["settings.security.title"],
-      description: dict["settings.security.desc"],
-      href: "/settings/security",
-      emoji: "🛡️",
-    },
+    // Раздел Security удален, так как пароли больше не используются
     {
       title: dict["settings.language.titleShort"],
       description: dict["settings.language.desc"],

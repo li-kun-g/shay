@@ -1,6 +1,8 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import type { AdapterUser } from "next-auth/adapters";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
@@ -17,10 +19,34 @@ function toUiDuration(d: CampusDurationDb | null | undefined): CampusDurationUI 
 }
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  adapter: {
+    ...PrismaAdapter(prisma),
+    createUser: (data: AdapterUser) => {
+      const generatedUsername = 
+        data.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '_') + 
+        '_' + Math.random().toString(36).substring(2, 5);
+      
+      return prisma.user.create({
+        data: {
+          ...data,
+          // 🔥 Сбрасываем гугловскую аватарку и ставим эмодзи по умолчанию
+          image: null, 
+          emoji: "☕",
+          username: generatedUsername,
+          termsAcceptedAt: new Date(), 
+        },
+      });
+    },
+  },
   session: { strategy: "jwt" },
 
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      allowDangerousEmailAccountLinking: true,
+    }),
+
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -30,50 +56,25 @@ export const authOptions: NextAuthOptions = {
 
       async authorize(credentials) {
         const h = await headers();
-
-        const ip =
-          h.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-          h.get("x-real-ip") ||
-          "unknown";
-
+        const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "unknown";
         const email = credentials?.email?.trim().toLowerCase();
         const password = credentials?.password ?? "";
 
-        if (!email || !password) {
-          throw new Error("INVALID_CREDENTIALS");
-        }
+        if (!email || !password) throw new Error("INVALID_CREDENTIALS");
 
-        // 🔐 IP LIMIT
         const ipCheck = await ipLimiter.limit(ip);
-        if (!ipCheck.success) {
-          throw new Error("TOO_MANY_REQUESTS");
-        }
+        if (!ipCheck.success) throw new Error("TOO_MANY_REQUESTS");
 
-        // 🔐 EMAIL LIMIT
         const emailCheck = await emailLimiter.limit(email);
-        if (!emailCheck.success) {
-          throw new Error("TOO_MANY_REQUESTS");
-        }
+        if (!emailCheck.success) throw new Error("TOO_MANY_REQUESTS");
 
         const user = await prisma.user.findUnique({
           where: { email },
           select: {
-            id: true,
-            email: true,
-            username: true,
-            name: true,
-            passwordHash: true,
-            emailVerified: true,
-
-            image: true,
-            status: true,
-            major: true,
-            yearOfStudy: true,
-            emoji: true,
-            college: true,
-            kimepId: true,
-
-            campusStatusVisibility: true,
+            id: true, email: true, username: true, name: true,
+            passwordHash: true, emailVerified: true, image: true,
+            status: true, major: true, yearOfStudy: true, emoji: true,
+            college: true, kimepId: true, campusStatusVisibility: true,
             campusStatusDuration: true,
           },
         });
@@ -84,7 +85,6 @@ export const authOptions: NextAuthOptions = {
         }
 
         const ok = await bcrypt.compare(password, user.passwordHash);
-
         if (!ok) {
           await new Promise((res) => setTimeout(res, 800));
           throw new Error("INVALID_CREDENTIALS");
@@ -95,7 +95,6 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name ?? "Student",
           username: user.username,
-
           image: user.image,
           status: user.status,
           major: user.major,
@@ -103,22 +102,46 @@ export const authOptions: NextAuthOptions = {
           emoji: user.emoji,
           college: user.college,
           kimepId: user.kimepId,
-
           campusStatusVisibility: user.campusStatusVisibility,
-          campusStatusDuration: toUiDuration(
-            (user.campusStatusDuration ?? null) as CampusDurationDb | null
-          ),
+          campusStatusDuration: toUiDuration(user.campusStatusDuration as CampusDurationDb),
         } as any;
       },
     }),
   ],
 
-  pages: { signIn: "/signin" },
+  events: {
+    async signIn({ user, account }) {
+      if (account?.provider === "google" && user.email) {
+        await prisma.user.update({
+          where: { email: user.email },
+          data: { termsAcceptedAt: new Date() },
+        });
+      }
+    },
+  },
+
+  pages: { 
+    signIn: "/signin",
+    error: "/auth/error" 
+  },
 
   callbacks: {
+    async signIn({ account, profile }) {
+      if (account?.provider === "google") {
+        if (!profile?.email) return false;
+        const email = profile.email.toLowerCase();
+        const isKimep = email.endsWith("@kimep.kz");
+        const admins = process.env.KIMEPISH_ADMIN_EMAILS?.split(",") || [];
+        const testAccounts = ["alikhan.tuganbayevda@gmail.com"];
+        
+        return isKimep || admins.includes(email) || testAccounts.includes(email);
+      }
+      return true;
+    },
+
     async jwt({ token, user }) {
       if (user) {
-        token.id = (user as any).id;
+        token.id = user.id;
         token.username = (user as any).username;
       }
       return token;
@@ -130,21 +153,10 @@ export const authOptions: NextAuthOptions = {
       const dbUser = await prisma.user.findUnique({
         where: { id: token.id as string },
         select: {
-          id: true,
-          email: true,
-          username: true,
-          name: true,
-
-          image: true,
-          status: true,
-          major: true,
-          yearOfStudy: true,
-          emoji: true,
-          college: true,
-          kimepId: true,
-
-          campusStatusVisibility: true,
-          campusStatusDuration: true,
+          id: true, email: true, username: true, name: true, image: true,
+          role: true, termsAcceptedAt: true, status: true, major: true,
+          yearOfStudy: true, emoji: true, college: true, kimepId: true,
+          campusStatusVisibility: true, campusStatusDuration: true,
         },
       });
 
@@ -156,17 +168,16 @@ export const authOptions: NextAuthOptions = {
         username: dbUser.username,
         name: dbUser.name ?? "Student",
         image: dbUser.image ?? "",
+        role: dbUser.role,
+        termsAcceptedAt: dbUser.termsAcceptedAt,
         status: dbUser.status ?? "",
         major: dbUser.major ?? "",
         yearOfStudy: dbUser.yearOfStudy ?? null,
         emoji: dbUser.emoji ?? "☕",
         college: dbUser.college ?? "",
         kimepId: dbUser.kimepId ?? "",
-        campusStatusVisibility:
-          dbUser.campusStatusVisibility ?? "EVERYONE",
-        campusStatusDuration: toUiDuration(
-          (dbUser.campusStatusDuration ?? null) as CampusDurationDb | null
-        ),
+        campusStatusVisibility: dbUser.campusStatusVisibility ?? "EVERYONE",
+        campusStatusDuration: toUiDuration(dbUser.campusStatusDuration as CampusDurationDb),
       });
 
       return session;

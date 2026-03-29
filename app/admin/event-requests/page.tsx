@@ -39,7 +39,7 @@ type EventRequestRow = {
     id: string;
     username: string;
     name: string | null;
-    email: string;
+    email: string | null; // Исправлено: теперь допускает null
     isOfficial: boolean;
     isGroupAccount: boolean;
   };
@@ -68,7 +68,9 @@ export default async function AdminEventRequestsPage(props: {
   const { status } = await props.searchParams;
   const currentStatus: "PENDING" | "APPROVED" | "REJECTED" = status ?? "PENDING";
 
-  const requests: EventRequestRow[] = await prisma.eventRequest.findMany({
+  // Используем приведение типа к unknown, а затем к EventRequestRow[], 
+  // чтобы TypeScript корректно сопоставил данные из Prisma с нашим типом
+  const requests = (await prisma.eventRequest.findMany({
     where: { status: currentStatus as any },
     orderBy: { createdAt: "desc" },
     include: {
@@ -83,7 +85,7 @@ export default async function AdminEventRequestsPage(props: {
         },
       },
     },
-  });
+  })) as unknown as EventRequestRow[];
 
   const tabBase = "rounded-xl border px-3 py-2 text-sm font-medium transition";
   const activeTab = "bg-black text-white border-black";
@@ -132,7 +134,7 @@ export default async function AdminEventRequestsPage(props: {
                 <div>
                   <div className="text-lg font-semibold">{r.title}</div>
                   <div className="text-sm text-gray-500">
-                    by {r.requestedBy.name || r.requestedBy.username} ({r.requestedBy.email})
+                    by {r.requestedBy.name || r.requestedBy.username} {r.requestedBy.email ? `(${r.requestedBy.email})` : ""}
                     {r.requestedBy.isOfficial ? " • Official" : ""}
                     {r.requestedBy.isGroupAccount ? " • Group account" : ""}
                   </div>
@@ -159,37 +161,38 @@ export default async function AdminEventRequestsPage(props: {
                 />
               ) : null}
 
-              {r.status === "PENDING" ? (
-                <div className="flex gap-2 pt-2">
-                  <form
-                    action={async () => {
-                      "use server";
-                      await approveEventRequest(r.id);
-                    }}
-                  >
-                    <button
-                      type="submit"
-                      className="rounded-xl bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700"
-                    >
-                      Approve
-                    </button>
-                  </form>
+      {/* Замени блок с кнопками Approve/Reject на этот */}
+{r.status === "PENDING" ? (
+  <div className="flex gap-2 pt-2">
+    <form
+      action={async (formData: FormData) => {
+        "use server";
+        await approveEventRequest(r.id);
+      }}
+    >
+      <button
+        type="submit"
+        className="rounded-xl bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700"
+      >
+        Approve
+      </button>
+    </form>
 
-                  <form
-                    action={async () => {
-                      "use server";
-                      await rejectEventRequest(r.id);
-                    }}
-                  >
-                    <button
-                      type="submit"
-                      className="rounded-xl bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
-                    >
-                      Reject
-                    </button>
-                  </form>
-                </div>
-              ) : null}
+    <form
+      action={async (formData: FormData) => {
+        "use server";
+        await rejectEventRequest(r.id);
+      }}
+    >
+      <button
+        type="submit"
+        className="rounded-xl bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+      >
+        Reject
+      </button>
+    </form>
+  </div>
+) : null}
             </div>
           ))}
         </div>

@@ -372,6 +372,40 @@ export type I18nKey =
 | "composer.sentToModeration"
 | "composer.moderationDesc"
 | "settings.profile.changePhoto"
+  | "auth.signIn.subtitle"
+  | "auth.signIn.google"
+  | "auth.signIn.orEmail"
+  | "auth.signIn.email"
+  | "auth.signIn.password"
+  | "auth.signIn.forgotPassword"
+  | "auth.signIn.loginButton"
+  | "auth.signIn.loggingIn"
+  | "auth.signIn.noAccount"
+  | "auth.signIn.signUp"
+  | "auth.signIn.consentText"
+  | "auth.signIn.terms"
+  | "auth.signIn.and"
+  | "auth.signIn.privacy"
+  | "auth.error.generic"
+  | "auth.error.invalid"
+  | "auth.error.rateLimit"
+  | "auth.error.failed"
+  | "auth.consent.title"
+  | "auth.consent.description"
+  | "auth.consent.agree"
+  | "auth.consent.terms"
+  | "auth.consent.privacy"
+  | "auth.signIn.independentDesc"
+  | "auth.signIn.noPasswords"
+  | "auth.signIn.studentMailInstruction"
+  | "auth.signIn.googleButton"
+  | "auth.signIn.agreementPrefix"
+  | "auth.signIn.termsLink"
+  | "auth.signIn.privacyLink"
+  | "auth.signIn.privacyNotice"
+  | "auth.signIn.studentMailPrefix"
+| "auth.signIn.studentMailHighlight"
+| "auth.signIn.studentMailSuffix"
 
 const DICTS: Record<Lang, Record<I18nKey, string>> = {
   EN: {
@@ -728,6 +762,40 @@ const DICTS: Record<Lang, Record<I18nKey, string>> = {
     "composer.sentToModeration": "Your post sent for moderation",
     "composer.moderationDesc": "It will appear on the feed once it has been approved by the team!",
     "settings.profile.changePhoto": "Change Photo",
+  "auth.signIn.subtitle": "Spill the tea with your campus.",
+  "auth.signIn.google": "Continue with Google",
+  "auth.signIn.orEmail": "Or email",
+  "auth.signIn.email": "Email",
+  "auth.signIn.password": "Password",
+  "auth.signIn.forgotPassword": "Forgot password?",
+  "auth.signIn.loginButton": "Log in",
+  "auth.signIn.loggingIn": "Logging in...",
+  "auth.signIn.noAccount": "No account?",
+  "auth.signIn.signUp": "Sign up",
+  "auth.signIn.consentText": "By clicking \"Log in\" or \"Continue with Google\", you agree to our",
+  "auth.signIn.terms": "Terms of Service",
+  "auth.signIn.and": "and",
+  "auth.signIn.privacy": "Privacy Policy",
+  "auth.error.generic": "Something went wrong. Try again.",
+  "auth.error.invalid": "Wrong email or password",
+  "auth.error.rateLimit": "Too many attempts. Try again later.",
+  "auth.error.failed": "Login failed. Try again.",
+  "auth.consent.title": "Welcome to Shay! ☕",
+  "auth.consent.description": "Before you start, please confirm your agreement with the Terms of Service and Privacy Policy. The service is built by students for students.",
+  "auth.consent.agree": "I agree",
+  "auth.consent.terms": "Terms",
+  "auth.consent.privacy": "Privacy",
+  "auth.signIn.independentDesc": "We are an independent social network. It is not an official platform of any educational institution, and",
+    "auth.signIn.noPasswords": "we do not collect passwords",
+    "auth.signIn.studentMailInstruction": "Use your student email to prove that you are a student!",
+    "auth.signIn.googleButton": "Continue with Google",
+    "auth.signIn.agreementPrefix": "By continuing, you agree to our",
+    "auth.signIn.termsLink": "Terms and conditions",
+    "auth.signIn.privacyLink": "Privacy Policy",
+    "auth.signIn.privacyNotice": "We value your privacy and only use Google for authentication.",
+    "auth.signIn.studentMailPrefix": "Use your ",
+  "auth.signIn.studentMailHighlight": "student email",
+  "auth.signIn.studentMailSuffix": " to prove that you are a student!",
   },
   RU: {
     "nav.feed": "Лента",
@@ -1083,6 +1151,40 @@ const DICTS: Record<Lang, Record<I18nKey, string>> = {
     "composer.sentToModeration": "Ваш пост отправлен на модерацию",
     "composer.moderationDesc": "Он появится в ленте после того, как команда одобрит его!",
     "settings.profile.changePhoto": "Изменить фото",
+    "auth.signIn.subtitle": "Обсуждай новости своего кампуса.",
+  "auth.signIn.google": "Продолжить через Google",
+  "auth.signIn.orEmail": "Или через почту",
+  "auth.signIn.email": "Электронная почта",
+  "auth.signIn.password": "Пароль",
+  "auth.signIn.forgotPassword": "Забыли пароль?",
+  "auth.signIn.loginButton": "Войти",
+  "auth.signIn.loggingIn": "Входим...",
+  "auth.signIn.noAccount": "Нет аккаунта?",
+  "auth.signIn.signUp": "Зарегистрироваться",
+  "auth.signIn.consentText": "Нажимая «Войти» или «Продолжить через Google», вы соглашаетесь с нашими",
+  "auth.signIn.terms": "Условиями использования",
+  "auth.signIn.and": "и",
+  "auth.signIn.privacy": "Политикой конфиденциальности",
+  "auth.error.generic": "Что-то пошло не так. Попробуйте еще раз.",
+  "auth.error.invalid": "Неверная почта или пароль",
+  "auth.error.rateLimit": "Слишком много попыток. Попробуйте позже.",
+  "auth.error.failed": "Ошибка входа. Попробуйте еще раз.",
+  "auth.consent.title": "Добро пожаловать в Shay! ☕",
+  "auth.consent.description": "Прежде чем начать, пожалуйста, подтвердите согласие с Условиями использования и Политикой конфиденциальности. Сервис создан студентами для студентов.",
+  "auth.consent.agree": "Я согласен",
+  "auth.consent.terms": "Условия",
+  "auth.consent.privacy": "Конфиденциальность",
+  "auth.signIn.independentDesc": "Мы — независимая социальная сеть. Это не официальная платформа какого-либо учебного заведения, и",
+    "auth.signIn.noPasswords": "мы не собираем пароли",
+    "auth.signIn.studentMailInstruction": "Используйте свою студенческую почту, чтобы подтвердить статус студента!",
+    "auth.signIn.googleButton": "Продолжить через Google",
+    "auth.signIn.agreementPrefix": "Продолжая, вы соглашаетесь с нашими",
+    "auth.signIn.termsLink": "Условиями использования",
+    "auth.signIn.privacyLink": "Политикой конфиденциальности",
+    "auth.signIn.privacyNotice": "Мы ценим вашу конфиденциальность и используем Google только для аутентификации.",
+    "auth.signIn.studentMailPrefix": "Используйте свою ",
+  "auth.signIn.studentMailHighlight": "студенческую почту",
+  "auth.signIn.studentMailSuffix": ", чтобы подтвердить статус студента!",
   },
   KK: {
     "nav.feed": "Таспа",
@@ -1105,7 +1207,7 @@ const DICTS: Record<Lang, Record<I18nKey, string>> = {
     "common.loading": "Жүктелуде…",
     "composer.spill": "Жариялау",
     "composer.posting": "Жариялануда...",
-    "composer.placeholder": "Бүгін кимэпімізде қандай жаңалық? ☕",
+    "composer.placeholder": "Бүгін универде қандай жаңалық? ☕",
     "composer.open": "Пост жазу",
     "composer.removeImage": "Суретті өшіру",
     "composer.photoNonAnonOnly": "Сурет тек анон емес посттарда қолжетімді",
@@ -1438,6 +1540,40 @@ const DICTS: Record<Lang, Record<I18nKey, string>> = {
     "composer.sentToModeration": "Сіздің жазбаңыз модерацияға жіберілді",
     "composer.moderationDesc": "Ол команда мақұлдағаннан кейін лентада пайда болады!",
       "settings.profile.changePhoto": "Фотоны өзгерту",
+      "auth.signIn.subtitle": "Өз кампусыңның жаңалықтарын талқыла.",
+  "auth.signIn.google": "Google арқылы жалғастыру",
+  "auth.signIn.orEmail": "Немесе пошта арқылы",
+  "auth.signIn.email": "Электрондық пошта",
+  "auth.signIn.password": "Құпия сөз",
+  "auth.signIn.forgotPassword": "Құпия сөзді ұмыттыңыз ба?",
+  "auth.signIn.loginButton": "Кіру",
+  "auth.signIn.loggingIn": "Кіруде...",
+  "auth.signIn.noAccount": "Аккаунт жоқ па?",
+  "auth.signIn.signUp": "Тіркелу",
+  "auth.signIn.consentText": "«Кіру» немесе «Google арқылы жалғастыру» түймесін басу арқылы сіз біздің",
+  "auth.signIn.terms": "Пайдалану шарттарымызбен",
+  "auth.signIn.and": "және",
+  "auth.signIn.privacy": "Құпиялылық саясатымызбен келісесіз",
+  "auth.error.generic": "Бірдеңе дұрыс болмады. Қайталап көріңіз.",
+  "auth.error.invalid": "Пошта немесе құпия сөз қате",
+  "auth.error.rateLimit": "Әрекет саны тым көп. Кейінірек қайталаңыз.",
+  "auth.error.failed": "Кіру қатесі. Қайталап көріңіз.",
+  "auth.consent.title": "Shay-ға қош келдіңіз! ☕",
+  "auth.consent.description": "Бастамас бұрын Пайдалану шарттары мен Құпиялылық саясатымен келісетініңізді растаңыз. Сервисті студенттер студенттер үшін жасаған.",
+  "auth.consent.agree": "Мен келісемін",
+  "auth.consent.terms": "Шарттар",
+  "auth.consent.privacy": "Құпиялылық",
+  "auth.signIn.independentDesc": "Біз тәуелсіз әлеуметтік желіміз. Бұл қандай да бір оқу орнының ресми платформасы емес және",
+    "auth.signIn.noPasswords": "біз парольдерді жинамаймыз",
+    "auth.signIn.studentMailInstruction": "Студент екеніңізді растау үшін студенттік поштаңызды пайдаланыңыз!",
+    "auth.signIn.googleButton": "Google арқылы жалғастыру",
+    "auth.signIn.agreementPrefix": "Жалғастыра отырып, сіз біздің",
+    "auth.signIn.termsLink": "Пайдалану шарттарымен",
+    "auth.signIn.privacyLink": "Құпиялылық саясатымен келісесіз",
+    "auth.signIn.privacyNotice": "Біз сіздің құпиялылығыңызды бағалаймыз және Google-ды тек аутентификация үшін пайдаланыңыз.",
+    "auth.signIn.studentMailPrefix": "Студент екеніңізді растау үшін ",
+  "auth.signIn.studentMailHighlight": "студенттік поштаңызды",
+  "auth.signIn.studentMailSuffix": " пайдаланыңыз!",
   },
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useMemo, useState, useTransition } from "react";
+import React, { createContext, useContext, useMemo, useState, useTransition, useEffect } from "react";
 import type { Lang, I18nKey } from "@/lib/i18n";
 import { getDict } from "@/lib/i18n";
 import { setLanguage } from "@/app/actions/setLanguage";
@@ -25,10 +25,31 @@ export function LanguageProvider(props: { initialLang: Lang; children: React.Rea
     setLangState(next); // instant UI change
     startTransition(async () => {
       await setLanguage(next); // persist DB + cookie
-      // no need to refresh hard; but you can if you have server-rendered strings elsewhere:
-      // window.location.reload();
     });
   };
+
+  // 🌍 Авто-определение языка девайса при первом визите
+  useEffect(() => {
+    const hasLangCookie = document.cookie.includes("kimepish-lang");
+
+    if (!hasLangCookie) {
+      const browserLang = navigator.language.split("-")[0].toUpperCase();
+      
+      let targetLang: Lang = "EN"; 
+      if (browserLang === "RU") targetLang = "RU";
+      if (browserLang === "KK") targetLang = "KK";
+
+      if (targetLang !== props.initialLang) {
+        // Если язык девайса отличается от EN — вызываем сохранение
+        setLang(targetLang);
+      } else {
+        // Если девайс и так на EN, просто ставим куку вручную,
+        // чтобы этот useEffect больше не срабатывал
+        document.cookie = `kimepish-lang=${targetLang}; path=/; max-age=31536000`;
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.initialLang]);
 
   const value = useMemo(() => ({ lang, t, setLang, isPending }), [lang, isPending]);
 

@@ -57,55 +57,63 @@ enum PostStatus {
 }
 
 model User {
-  id                    String                @id @default(cuid())
-  email                 String                @unique
-  name                  String?
-  emoji                 String                @default("☕")
-  createdAt             DateTime              @default(now())
-  emailVerified         DateTime?
-  image                 String?
-  passwordHash          String?
-  college               String                @default("Bang College of Business")
-  kimepId               Int?
-  major                 String?
-  status                String?
-  yearOfStudy           Int?
-  username              String                @unique
-  isGroupAccount        Boolean               @default(false)
-  isOfficial            Boolean               @default(false)
-  accounts              Account[]
-  badges                Badge[]
-  comments              Comment[]
-  conversations         ConversationMember[]
-  notifications         Notification[]        @relation("UserNotifications")
-  causedNotifications   Notification[]        @relation("NotificationActor")
-  eventsCreated         Event[]               @relation("UserCreatedEvents")
-  eventAttendance       EventAttendance[]
-  eventRequests         EventRequest[]
-  sentFriendRequests    FriendRequest[]       @relation("sentFriendRequests")
-  receivedFriendRequests FriendRequest[]      @relation("receivedFriendRequests")
-  friendshipsA          Friendship[]          @relation("friendshipA")
-  friendshipsB          Friendship[]          @relation("friendshipB")
-  groupsAsPresident     Group[]               @relation("groupsAsPresident")
-  groupCreateRequests   GroupCreateRequest[]
-  groupFollows          GroupFollow[]
-  groupJoinRequests     GroupJoinRequest[]
-  groupMemberships      GroupMember[]
-  likes                 Like[]
-  messages              Message[]
-  posts                 Post[]
-  professorVotes        ProfessorVote[]
-  sessions              Session[]
-  postReactions         PostReaction[]
-  campusStatus          CampusStatus?
-  campusStatusUpdatedAt DateTime?
-  campusStatusExpiresAt DateTime?
+  id                     String                @id @default(cuid())
+  email                  String?               @unique // Обновлено для NextAuth
+  name                   String?
+  emoji                  String                @default("☕")
+  createdAt              DateTime              @default(now())
+  emailVerified          DateTime?
+  image                  String?
+  passwordHash           String?               // Оставлено для обратной совместимости старых аккаунтов
+  college                String                @default("Bang College of Business")
+  kimepId                Int?
+  major                  String?
+  status                 String?
+  yearOfStudy            Int?
+  username               String                @unique
+  isGroupAccount         Boolean               @default(false)
+  isOfficial             Boolean               @default(false)
+
+  // === НОВЫЕ ПОЛЯ (OAuth, Легальность, Масштабирование) ===
+  termsAcceptedAt        DateTime?             // Фиксация даты принятия Terms of Service / Privacy
+  termsVersion           Int                   @default(1) // Версия правил (поможет, когда будешь менять условия)
+  university             String                @default("KIMEP") // Фундамент для НУ, КБТУ, Кардиффа и т.д.
+  role                   String                @default("USER")  // Роль для доступа ("USER" или "ADMIN" для тестов)
+  // ==========================================================
+
+  accounts               Account[]
+  badges                 Badge[]
+  comments               Comment[]
+  conversations          ConversationMember[]
+  notifications          Notification[]        @relation("UserNotifications")
+  causedNotifications    Notification[]        @relation("NotificationActor")
+  eventsCreated          Event[]               @relation("UserCreatedEvents")
+  eventAttendance        EventAttendance[]
+  eventRequests          EventRequest[]
+  sentFriendRequests     FriendRequest[]       @relation("sentFriendRequests")
+  receivedFriendRequests FriendRequest[]       @relation("receivedFriendRequests")
+  friendshipsA           Friendship[]          @relation("friendshipA")
+  friendshipsB           Friendship[]          @relation("friendshipB")
+  groupsAsPresident      Group[]               @relation("groupsAsPresident")
+  groupCreateRequests    GroupCreateRequest[]
+  groupFollows           GroupFollow[]
+  groupJoinRequests      GroupJoinRequest[]
+  groupMemberships       GroupMember[]
+  likes                  Like[]
+  messages               Message[]
+  posts                  Post[]
+  professorVotes         ProfessorVote[]
+  sessions               Session[]
+  postReactions          PostReaction[]
+  campusStatus           CampusStatus?
+  campusStatusUpdatedAt  DateTime?
+  campusStatusExpiresAt  DateTime?
   campusStatusVisibility CampusVisibility      @default(FRIENDS)
   campusStatusDuration   CampusDuration        @default(H2)
-  friendsListVisibility ProfileVisibility     @default(EVERYONE)
-  groupsVisibility      ProfileVisibility     @default(EVERYONE)
-  dmPrivacy             DmPrivacy             @default(EVERYONE)
-  language              AppLanguage           @default(EN)
+  friendsListVisibility  ProfileVisibility     @default(EVERYONE)
+  groupsVisibility       ProfileVisibility     @default(EVERYONE)
+  dmPrivacy              DmPrivacy             @default(EVERYONE)
+  language               AppLanguage           @default(EN)
 
   @@index([username])
 }

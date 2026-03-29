@@ -5,8 +5,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import Providers from "./providers";
-import Navbar from "@/components/Navbar";
-import SideNav from "@/components/SideNav";
+import TermsModal from "@/components/TermsModal";
 import "./globals.css";
 
 import { cookies } from "next/headers";
@@ -14,6 +13,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { Lang } from "@/lib/i18n";
+
+// Импортируем клиентский компонент для обертки контента
+import LayoutClientWrapper from "@/components/LayoutClientWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,19 +36,33 @@ const LANG_COOKIE = "kimepish-lang";
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
+  const cookieStore = await cookies();
+  const cookieLang = cookieStore.get(LANG_COOKIE)?.value;
 
-  // 1) cookie (fast) 2) DB 3) default EN
-  const cookieLang = (await cookies()).get(LANG_COOKIE)?.value as Lang | undefined;
+  let initialLang: Lang = "EN";
 
-  let initialLang: Lang = (cookieLang && ["EN", "RU", "KK"].includes(cookieLang) ? cookieLang : null) as any;
-  if (!initialLang) initialLang = "EN";
+  if (cookieLang && ["EN", "RU", "KK"].includes(cookieLang)) {
+    initialLang = cookieLang as Lang;
+  }
+
+  let showTermsModal = false;
 
   if (session?.user && "id" in session.user) {
     const me = await prisma.user.findUnique({
       where: { id: session.user.id as string },
-      select: { language: true },
+      select: { 
+        language: true,
+        termsAcceptedAt: true
+      },
     });
-    if (me?.language) initialLang = me.language as Lang;
+    
+    if (me?.language && ["EN", "RU", "KK"].includes(me.language)) {
+      initialLang = me.language as Lang;
+    }
+    
+    if (me && !me.termsAcceptedAt) {
+      showTermsModal = true;
+    }
   }
 
   return (
@@ -72,21 +88,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
       <body className={`${geistSans.variable} ${geistMono.variable} bg-[var(--background)] text-[var(--foreground)] antialiased`}>
         <Providers initialLang={initialLang}>
-          <Navbar />
+          {/* Модалка условий */}
+          {showTermsModal && session?.user?.email && (
+            <TermsModal userEmail={session.user.email} />
+          )}
 
-          <div className="mx-auto max-w-7xl px-2 sm:px-4">
-            <div className="hidden lg:flex justify-center gap-6">
-              <aside className="w-[260px] shrink-0 sticky top-[64px] h-[calc(100vh-64px)]">
-                <SideNav />
-              </aside>
-
-              <main className="min-w-0 w-full max-w-[720px]">{children}</main>
-            </div>
-
-            <div className="lg:hidden">
-              <main className="min-w-0">{children}</main>
-            </div>
-          </div>
+          {/* Используем клиентскую обертку, чтобы скрыть Navbar 
+              и SideNav на страницах /terms и /privacy 
+          */}
+          <LayoutClientWrapper>
+            {children}
+          </LayoutClientWrapper>
         </Providers>
 
         <Analytics />
