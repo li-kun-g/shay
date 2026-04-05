@@ -1,33 +1,16 @@
-// app/actions/getComments.ts
 "use server";
 
 import { prisma } from "@/lib/prisma";
 import { PostStatus } from "@prisma/client";
-
-type CommentRow = {
-  id: string;
-  content: string;
-  anonymous: boolean;
-  createdAt: Date;
-  authorId: string;
-  status: string;
-  author: {
-    id: string;
-    username: string;
-    name: string | null;
-    emoji: string;
-    image: string | null;
-  };
-};
 
 export async function getComments(postId: string) {
   const id = (postId ?? "").trim();
   if (!id) return [];
 
   const comments = await prisma.comment.findMany({
-    where: { 
+    where: {
       postId: id,
-      status: PostStatus.APPROVED 
+      status: PostStatus.APPROVED,
     },
     orderBy: { createdAt: "asc" },
     include: {
@@ -44,7 +27,6 @@ export async function getComments(postId: string) {
   });
 
   return comments.map((c) => {
-    // Полностью скрываем реального автора, если комментарий анонимный
     if (c.anonymous) {
       return {
         id: c.id,
@@ -52,6 +34,8 @@ export async function getComments(postId: string) {
         anonymous: true,
         createdAt: c.createdAt,
         authorId: "anonymous",
+        giphyId: c.giphyId,
+        giphyTitle: c.giphyTitle,
         author: {
           id: "anonymous",
           username: "anonymous",
@@ -62,13 +46,14 @@ export async function getComments(postId: string) {
       };
     }
 
-    // Возвращаем реальные данные для обычных комментариев
     return {
       id: c.id,
       content: c.content,
       anonymous: false,
       createdAt: c.createdAt,
       authorId: c.authorId,
+      giphyId: c.giphyId,
+      giphyTitle: c.giphyTitle,
       author: {
         id: c.author.id,
         username: c.author.username,

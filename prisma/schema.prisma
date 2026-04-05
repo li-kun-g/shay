@@ -146,22 +146,24 @@ model Post {
 }
 
 model Comment {
-  id        String     @id @default(cuid())
-  content   String
-  anonymous Boolean    @default(false)
-  
-  // Используем ваш существующий PostStatus
-  status    PostStatus @default(APPROVED) 
-  
-  postId    String
-  authorId  String
-  createdAt DateTime @default(now())
-  
-  author    User       @relation(fields: [authorId], references: [id])
-  post      Post       @relation(fields: [postId], references: [id], onDelete: Cascade)
+  id         String     @id @default(cuid())
+  content    String     @default("")
+  anonymous  Boolean    @default(false)
+  status     PostStatus @default(APPROVED)
+
+  postId     String
+  authorId   String
+  createdAt  DateTime   @default(now())
+
+  // GIF fields
+  giphyId    String?
+  giphyTitle String?
+
+  author     User       @relation(fields: [authorId], references: [id])
+  post       Post       @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@index([postId])
-  @@index([status]) // Теперь это сработает, так как PostStatus определен
+  @@index([status])
 }
 
 model Like {

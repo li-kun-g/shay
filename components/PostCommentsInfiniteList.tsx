@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import GiphyGif from "@/components/GiphyGif";
 
 type CommentItem = {
   id: string;
@@ -9,9 +10,11 @@ type CommentItem = {
   anonymous: boolean;
   createdAt: string;
   authorId: string;
+  giphyId?: string | null;
+  giphyTitle?: string | null;
   author: {
     id: string;
-    username: string | null; // ✅ safer
+    username: string | null;
     name: string | null;
     image: string | null;
     emoji: string | null;
@@ -138,20 +141,34 @@ export default function PostCommentsInfiniteList(props: {
                     @{username}
                   </Link>
                 ) : (
-                  <div className="text-sm font-medium">{c.author.name ?? "Student"}</div>
+                  <div className="text-sm font-medium">
+                    {c.author.name ?? "Student"}
+                  </div>
                 )}
 
                 {!isAnon && c.author.name && (
-                  <div className="text-xs text-gray-500 break-words">{c.author.name}</div>
+                  <div className="text-xs text-gray-500 break-words">
+                    {c.author.name}
+                  </div>
                 )}
               </div>
 
-              <div className="text-xs text-gray-400 shrink-0">{formatDate(c.createdAt)}</div>
+              <div className="text-xs text-gray-400 shrink-0">
+                {formatDate(c.createdAt)}
+              </div>
             </div>
 
-            <p className="mt-2 text-sm text-gray-800 whitespace-pre-wrap break-words">
-              {c.content}
-            </p>
+            {c.content ? (
+              <p className="mt-2 text-sm text-gray-800 whitespace-pre-wrap break-words">
+                {c.content}
+              </p>
+            ) : null}
+
+          {c.giphyId ? (
+  <div className="mt-2 w-fit max-w-[320px] sm:max-w-[420px]">
+    <GiphyGif gifId={c.giphyId} />
+  </div>
+) : null}
           </div>
         );
       })}

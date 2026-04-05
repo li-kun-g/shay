@@ -1,4 +1,3 @@
-// app/api/posts/[id]/comments/route.ts
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -37,12 +36,11 @@ export async function GET(
   const { searchParams } = new URL(req.url);
   const cursor = decodeCursor(searchParams.get("cursor"));
 
-  // Базовое условие: только одобренные комментарии к конкретному посту
-  let where: any = { 
+  let where: any = {
     postId,
-    status: PostStatus.APPROVED 
+    status: PostStatus.APPROVED,
   };
-  
+
   const orderBy: Array<Record<string, unknown>> = [
     { createdAt: "desc" },
     { id: "desc" },
@@ -85,31 +83,33 @@ export async function GET(
     .slice()
     .reverse()
     .map((c) => {
-      // Полностью скрываем реального автора, если комментарий анонимный
       if (c.anonymous) {
         return {
           id: c.id,
           content: c.content,
           anonymous: true,
           createdAt: c.createdAt.toISOString(),
-          authorId: "anonymous", 
+          authorId: "anonymous",
+          giphyId: c.giphyId,
+          giphyTitle: c.giphyTitle,
           author: {
             id: "anonymous",
             username: "anonymous",
             name: "Anonymous",
             image: null,
-            emoji: "🔥", 
+            emoji: "🔥",
           },
         };
       }
 
-      // Возвращаем реальные данные для обычных комментариев
       return {
         id: c.id,
         content: c.content,
         anonymous: false,
         createdAt: c.createdAt.toISOString(),
         authorId: c.authorId,
+        giphyId: c.giphyId,
+        giphyTitle: c.giphyTitle,
         author: {
           id: c.author.id,
           username: c.author.username,

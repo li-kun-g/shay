@@ -46,8 +46,10 @@ async function createNotificationSafe(input: {
 
 export async function createComment(input: {
   postId: string;
-  content: string;
+  content?: string;
   anonymous: boolean;
+  giphyId?: string | null;
+  giphyTitle?: string | null;
 }) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) throw new Error("Not authenticated");
@@ -61,8 +63,18 @@ export async function createComment(input: {
   const postId = (input.postId ?? "").trim();
   if (!postId) throw new Error("POST_ID_REQUIRED");
 
-  const content = input.content.trim();
-  if (!content) return;
+  const content = (input.content ?? "").trim();
+  const giphyId = (input.giphyId ?? "").trim() || null;
+  const giphyTitle = (input.giphyTitle ?? "").trim() || null;
+
+  // Allow:
+  // - text only
+  // - text + GIF
+  // - GIF only
+  // Reject only when both are empty
+  if (!content && !giphyId) {
+    throw new Error("COMMENT_EMPTY");
+  }
 
   const post = await prisma.post.findUnique({
     where: { id: postId },
@@ -70,7 +82,7 @@ export async function createComment(input: {
   });
   if (!post) throw new Error("Post not found");
 
-  // Устанавливаем статус в зависимости от анонимности
+  // Anonymous comments go to moderation, non-anonymous go live immediately
   const status = input.anonymous ? PostStatus.PENDING : PostStatus.APPROVED;
 
   await prisma.comment.create({
@@ -80,18 +92,26 @@ export async function createComment(input: {
       anonymous: input.anonymous,
       authorId: me.id,
       status,
+      giphyId,
+      giphyTitle,
     },
   });
 
-  // Уведомление отправляем только если комментарий НЕ анонимный (сразу одобрен)
-  // Анонимные уведомления лучше отправлять в экшене админки при апруве
+  // Notify only when the comment is immediately approved
   if (post.authorId !== me.id && status === PostStatus.APPROVED) {
+    const hasGifOnly = !content && !!giphyId;
+    const hasTextAndGif = !!content && !!giphyId;
+
     await createNotificationSafe({
       userId: post.authorId,
       type: "POST_REPLY",
       title: "New reply to your post",
       body: input.anonymous
         ? "Someone replied to your post"
+        : hasGifOnly
+        ? `${me.name || me.username} replied to your post with a GIF`
+        : hasTextAndGif
+        ? `${me.name || me.username} replied to your post`
         : `${me.name || me.username} replied to your post`,
       href: `/post/${postId}`,
       actorId: input.anonymous ? null : me.id,
@@ -105,5 +125,8 @@ export async function createComment(input: {
   revalidatePath(`/u/${me.username}`);
   revalidatePath(`/post/${postId}`);
 
-  return { ok: true, pending: input.anonymous };
+  return {
+    ok: true,
+    pending: input.anonymous,
+  };
 }
