@@ -68,7 +68,7 @@ const landingCopy = {
     titleAccent: "edition",
     subtitle:
       "Shay is the independent social network built exclusively for university students. Share ideas, find your people, stay in the loop.",
-    createAccount: "Create account",
+
     whyTitle: "Why Shay",
     whyHeadingTop: "Built for students,",
     whyHeadingBottom: "not advertisers",
@@ -274,12 +274,6 @@ export default function SignInPage() {
             )}
             {copy.googleButton}
           </button>
-          <Link
-            href="/signup"
-            className="rounded-[10px] border border-[#2a2a2a] bg-transparent px-6 py-[13px] text-[15px] text-[#888] transition hover:border-[#555] hover:text-white"
-          >
-            {copy.createAccount}
-          </Link>
         </div>
       </section>
       <section id="features" className="mx-auto max-w-[900px] px-6 py-20 sm:px-10">

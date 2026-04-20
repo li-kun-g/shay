@@ -121,8 +121,7 @@ export default function SignUpPage() {
           </section>
 
           <section className="rounded-[20px] border border-[#2a2560] bg-[#100f1e] p-6 sm:p-8">
-            <h2 className="text-[28px] font-medium tracking-[-0.5px] text-white">Create account</h2>
-            <p className="mt-2 text-sm text-[#777]">Start with Google, or continue with email below.</p>
+            <p className="mt-2 text-sm text-[#777]">Start with Google.</p>
 
             <button
               onClick={handleGoogleSignUp}
@@ -193,13 +192,7 @@ export default function SignUpPage() {
                 <p className="mt-1 text-xs text-[#666]">Use at least 8 characters.</p>
               </div>
 
-              <button
-                onClick={onSubmit}
-                disabled={isPending || !canSubmit}
-                className="w-full rounded-xl bg-[#7F77DD] px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
-              >
-                {isPending ? "Creating..." : "Sign up with email"}
-              </button>
+
 
               <p className="pt-1 text-center text-sm text-[#777]">
                 Already have an account?{" "}
