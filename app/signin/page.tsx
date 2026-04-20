@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
+import { useI18n } from "@/components/LanguageProvider";
 
 
 
@@ -81,6 +82,7 @@ const features = [
 
 export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const { lang, setLang, isPending, t } = useI18n();
 
   const handleGoogleSignIn = () => {
     setIsLoading(true);
@@ -98,7 +100,7 @@ export default function SignInPage() {
           href="/signup"
           className="rounded-lg bg-[#7F77DD] px-[18px] py-2 text-[13px] font-medium text-white transition hover:opacity-90"
         >
-          Sign up
+          {t("auth.signup")}
         </Link>
       </nav>
 
@@ -121,6 +123,24 @@ export default function SignInPage() {
           people, stay in the loop.
         </p>
 
+        <div className="mb-4 flex justify-center">
+          <div className="inline-flex gap-1 rounded-2xl bg-[#111318] p-1">
+            {(["EN", "RU", "KK"] as const).map((l) => (
+              <button
+                key={l}
+                type="button"
+                onClick={() => setLang(l)}
+                disabled={isPending}
+                className={`rounded-xl px-4 py-1.5 text-xs font-semibold transition ${
+                  lang === l ? "bg-[#1c1f2a] text-white" : "text-[#777] hover:text-[#cfcfcf]"
+                }`}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
           <button
             type="button"
@@ -138,7 +158,7 @@ export default function SignInPage() {
                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
               </svg>
             )}
-            Continue with Google
+            {t("auth.signIn.googleButton")}
           </button>
           <Link
             href="/signup"
