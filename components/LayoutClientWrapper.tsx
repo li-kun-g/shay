@@ -7,11 +7,11 @@ import SideNav from "@/components/SideNav";
 export default function LayoutClientWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   
-  // Проверяем, является ли текущая страница юридической
-  const isLegalPage = pathname === "/terms" || pathname === "/privacy";
+  // Проверяем, является ли текущая страница юридической или страницей аутентификации
+  const isPageWithoutMenu = pathname === "/terms" || pathname === "/privacy" || pathname === "/signup" || pathname === "/signin" || pathname === "/forgot-password" || pathname === "/reset-password" || pathname === "/verify-email";
 
-  // Если это юридическая страница, рендерим ТОЛЬКО контент (children)
-  if (isLegalPage) {
+  // Если это страница без меню, рендерим ТОЛЬКО контент (children)
+  if (isPageWithoutMenu) {
     return <>{children}</>;
   }
 

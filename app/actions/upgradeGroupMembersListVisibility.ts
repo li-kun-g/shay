@@ -19,7 +19,7 @@ export async function updateGroupMembersListVisibility(formData: FormData) {
   const groupId = String(formData.get("groupId") ?? "").trim();
   const raw = String(formData.get("membersListVisibility") ?? "").trim();
 
-  if (!groupId) redirect("/settings/groups");
+  if (!groupId) redirect("/settings");
 
   const membersListVisibility: MembersListVisibility = VALUES.has(raw as MembersListVisibility)
     ? (raw as MembersListVisibility)
@@ -30,7 +30,7 @@ export async function updateGroupMembersListVisibility(formData: FormData) {
     select: { id: true, slug: true, presidentId: true },
   });
 
-  if (!group) redirect("/settings/groups");
+  if (!group) redirect("/settings");
 
   const isPresident = group.presidentId === myId;
 
@@ -47,18 +47,18 @@ export async function updateGroupMembersListVisibility(formData: FormData) {
     isAdminOrPresidentMember = !!gm;
   }
 
-  if (!isPresident && !isAdminOrPresidentMember) redirect("/settings/groups");
+  if (!isPresident && !isAdminOrPresidentMember) redirect("/settings");
 
   await prisma.group.update({
     where: { id: groupId },
     data: { membersListVisibility: membersListVisibility as any },
   });
 
-  revalidatePath("/settings/groups");
+  revalidatePath("/settings");
   if (group.slug) {
     revalidatePath(`/g/${group.slug}`);
     revalidatePath(`/g/${group.slug}/members`);
   }
 
-  redirect("/settings/groups");
+  redirect("/settings");
 }

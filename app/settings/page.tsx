@@ -48,13 +48,6 @@ export default async function SettingsPage() {
       href: "/settings/privacy",
       emoji: "🔒",
     },
-    {
-      title: dict["settings.groups.title"],
-      description: dict["settings.groups.desc"],
-      href: "/settings/groups",
-      emoji: "👥",
-      badge: dict["settings.groups.badge"],
-    },
     // Раздел Security удален, так как пароли больше не используются
     {
       title: dict["settings.language.titleShort"],
