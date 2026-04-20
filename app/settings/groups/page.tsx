@@ -9,7 +9,7 @@ import { cookies } from "next/headers";
 import { getDict, type Lang } from "@/lib/i18n";
 
 type Row = {
-  id: string;
+  id: string;  
   slug: string;
   name: string;
   image: string | null;
