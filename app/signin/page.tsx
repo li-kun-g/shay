@@ -233,15 +233,20 @@ export default function SignInPage() {
         </p>
 
         <div className="mb-4 flex justify-center">
-          <div className="inline-flex gap-1 rounded-2xl bg-[#111318] p-1">
+          <div className="relative inline-flex gap-1 overflow-hidden rounded-2xl bg-[#111318] p-1">
+            <div
+              className={`pointer-events-none absolute bottom-1 top-1 w-[52px] rounded-xl bg-[#1c1f2a] transition-transform duration-300 ease-out ${
+                lang === "EN" ? "translate-x-0" : lang === "RU" ? "translate-x-[56px]" : "translate-x-[112px]"
+              }`}
+            />
             {(["EN", "RU", "KK"] as const).map((l) => (
               <button
                 key={l}
                 type="button"
                 onClick={() => setLang(l)}
                 disabled={isPending}
-                className={`rounded-xl px-4 py-1.5 text-xs font-semibold transition ${
-                  lang === l ? "bg-[#1c1f2a] text-white" : "text-[#777] hover:text-[#cfcfcf]"
+                className={`relative z-10 w-[52px] rounded-xl px-0 py-1.5 text-xs font-semibold transition-colors duration-200 ${
+                  lang === l ? "text-white" : "text-[#777] hover:text-[#cfcfcf]"
                 }`}
               >
                 {l}
