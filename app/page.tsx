@@ -54,43 +54,26 @@ export default async function Home(props: { searchParams?: SP | Promise<SP> }) {
   const dict = getDict(lang);
 
   return (
-    <main className="mx-auto max-w-md px-3 py-4 md:max-w-2xl md:px-6 space-y-4">
-      <SpillComposer />
+    <main className="redesign-main-content">
+      <div className="redesign-card">
+        <SpillComposer />
+      </div>
 
-      <section className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
-              {dict["feed.sort"]}
-            </div>
-            <div className="mt-2">
-              <FeedSort />
-            </div>
-          </div>
-
-          {sort === "top" && (
-            <div className="text-xs text-gray-500">{dict["feed.sortedByLikes"]}</div>
-          )}
+      <section className="redesign-card redesign-filter-card">
+        <div className="redesign-filter-row">
+          <span className="redesign-filter-label">{dict["feed.sort"]}</span>
+          <FeedSort />
+          {sort === "top" && <div className="redesign-note">{dict["feed.sortedByLikes"]}</div>}
         </div>
 
-        <div className="my-3 h-px bg-gray-100" />
+        <div className="redesign-filter-row">
+          <span className="redesign-filter-label">{dict["feed.category"]}</span>
+          <CategoryFilter />
+        </div>
 
-        <div className="space-y-3">
-          <div>
-            <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
-              {dict["feed.category"]}
-            </div>
-            <div className="mt-2">
-              <CategoryFilter />
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
-              {dict["feed.visibility"]}
-            </div>
-            <AnonFilter />
-          </div>
+        <div className="redesign-filter-row">
+          <span className="redesign-filter-label">{dict["feed.visibility"]}</span>
+          <AnonFilter />
         </div>
       </section>
 

@@ -10,6 +10,7 @@ function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
+
 function isKimepEmail(email: string) {
   return /^[a-z0-9._%+-]+@kimep\.kz$/.test(normalizeEmail(email));
 }
