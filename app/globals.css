@@ -236,7 +236,7 @@ html.dark .hover\:bg-white:hover { background: rgba(255,255,255,0.06) !important
 .redesign-topbar {
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: 120;
   height: 56px;
   padding: 0 28px;
   display: flex;
@@ -245,6 +245,12 @@ html.dark .hover\:bg-white:hover { background: rgba(255,255,255,0.06) !important
   border-bottom: 1px solid var(--rd-border);
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(20px);
+}
+
+.redesign-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .redesign-logo {
@@ -267,6 +273,40 @@ html.dark .hover\:bg-white:hover { background: rgba(255,255,255,0.06) !important
   align-items: center;
   gap: 10px;
 }
+
+.redesign-burger-btn {
+  display: none;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--rd-radius-sm);
+  border: 1px solid var(--rd-border);
+  background: transparent;
+}
+
+.redesign-burger-icon {
+  position: relative;
+  width: 16px;
+  height: 14px;
+}
+
+.redesign-burger-icon span {
+  position: absolute;
+  left: 0;
+  width: 16px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--rd-white);
+  transition: all 0.16s ease;
+}
+
+.redesign-burger-icon .top { top: 0; }
+.redesign-burger-icon .mid { top: 6px; }
+.redesign-burger-icon .bot { top: 12px; }
+.redesign-burger-icon .top.open { transform: translateY(6px) rotate(45deg); }
+.redesign-burger-icon .mid.open { opacity: 0; }
+.redesign-burger-icon .bot.open { transform: translateY(-6px) rotate(-45deg); }
 
 .redesign-btn-ghost,
 .redesign-btn-logout {
@@ -309,6 +349,15 @@ html.dark .hover\:bg-white:hover { background: rgba(255,255,255,0.06) !important
 .redesign-sidebar {
   width: 220px;
   flex-shrink: 0;
+}
+
+.redesign-main-content {
+  flex: 1;
+  min-width: 0;
+  max-width: 760px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
 .redesign-menu-label {
@@ -393,12 +442,91 @@ html.dark .hover\:bg-white:hover { background: rgba(255,255,255,0.06) !important
   font-size: 0.75rem;
 }
 
+.redesign-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 160;
+}
+
+.redesign-drawer-backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+}
+
+.redesign-drawer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: min(82vw, 320px);
+  height: 100%;
+  border-right: 1px solid var(--rd-border);
+  background: #07070b;
+  padding: 10px;
+}
+
+.redesign-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 4px 10px;
+}
+
+/* SideNav visual overrides inside redesigned shell */
+.redesign-page .redesign-sidebar .rounded-2xl,
+.redesign-page .redesign-drawer .rounded-2xl {
+  border-color: var(--rd-border) !important;
+  background: var(--rd-surface) !important;
+  box-shadow: none !important;
+}
+
+.redesign-page .redesign-sidebar .text-gray-500,
+.redesign-page .redesign-drawer .text-gray-500 {
+  color: var(--rd-muted) !important;
+}
+
+.redesign-page .redesign-sidebar .text-gray-800,
+.redesign-page .redesign-drawer .text-gray-800 {
+  color: var(--rd-muted2) !important;
+}
+
+.redesign-page .redesign-sidebar .hover\:bg-gray-50:hover,
+.redesign-page .redesign-drawer .hover\:bg-gray-50:hover {
+  background: var(--rd-purple-subtle) !important;
+  color: var(--rd-white) !important;
+}
+
+.redesign-page .redesign-sidebar .border-gray-200,
+.redesign-page .redesign-drawer .border-gray-200 {
+  border-color: var(--rd-border) !important;
+}
+
+.redesign-page .redesign-sidebar .group-hover\:bg-gray-100:hover,
+.redesign-page .redesign-drawer .group-hover\:bg-gray-100:hover {
+  background: rgba(124, 58, 237, 0.2) !important;
+}
+
 @media (max-width: 960px) {
   .redesign-layout {
-    flex-direction: column;
+    padding: 18px 12px;
   }
 
-  .redesign-sidebar {
-    width: 100%;
+  .redesign-sidebar.desktop {
+    display: none;
+  }
+
+  .redesign-main-content {
+    max-width: none;
+  }
+
+  .redesign-burger-btn {
+    display: inline-flex;
+  }
+
+  .redesign-header-right .redesign-btn-ghost {
+    display: none;
   }
 }
