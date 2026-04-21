@@ -52,49 +52,68 @@ export default async function Home(props: { searchParams?: SP | Promise<SP> }) {
   if (me?.language) lang = me.language as Lang;
 
   const dict = getDict(lang);
+  const displayName = session?.user?.name || session?.user?.email || "User";
 
   return (
-    <main className="mx-auto max-w-md px-3 py-4 md:max-w-2xl md:px-6 space-y-4">
-      <SpillComposer />
+    <div className="redesign-page">
+      <header className="redesign-topbar">
+        <div className="redesign-logo">
+          Shay <span>☕</span>
+        </div>
+        <div className="redesign-header-right">
+          <button className="redesign-btn-ghost">{displayName}</button>
+          <form action="/api/auth/signout" method="post">
+            <input type="hidden" name="callbackUrl" value="/" />
+            <button type="submit" className="redesign-btn-logout">
+              Log out
+            </button>
+          </form>
+        </div>
+      </header>
 
-      <section className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
-              {dict["feed.sort"]}
-            </div>
-            <div className="mt-2">
-              <FeedSort />
-            </div>
+      <div className="redesign-layout">
+        <aside className="redesign-sidebar">
+          <div className="redesign-menu-label">Menu</div>
+          <nav className="redesign-nav">
+            <a href="#" className="active">Feed</a>
+            <a href="#">Events</a>
+            <a href="#">My Campus</a>
+            <a href="#">Groups</a>
+            <a href="#">Messages</a>
+            <a href="#">Notifications</a>
+            <a href="#">Friends</a>
+            <a href="#">Settings</a>
+          </nav>
+        </aside>
+
+        <main className="redesign-main">
+          <div className="redesign-card">
+            <SpillComposer />
           </div>
 
-          {sort === "top" && (
-            <div className="text-xs text-gray-500">{dict["feed.sortedByLikes"]}</div>
-          )}
-        </div>
-
-        <div className="my-3 h-px bg-gray-100" />
-
-        <div className="space-y-3">
-          <div>
-            <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
-              {dict["feed.category"]}
+          <section className="redesign-card redesign-filter-card">
+            <div className="redesign-filter-row">
+              <span className="redesign-filter-label">{dict["feed.sort"]}</span>
+              <FeedSort />
+              {sort === "top" && (
+                <div className="redesign-note">{dict["feed.sortedByLikes"]}</div>
+              )}
             </div>
-            <div className="mt-2">
+
+            <div className="redesign-filter-row">
+              <span className="redesign-filter-label">{dict["feed.category"]}</span>
               <CategoryFilter />
             </div>
-          </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
-              {dict["feed.visibility"]}
+            <div className="redesign-filter-row">
+              <span className="redesign-filter-label">{dict["feed.visibility"]}</span>
+              <AnonFilter />
             </div>
-            <AnonFilter />
-          </div>
-        </div>
-      </section>
+          </section>
 
-      <FeedInfiniteList sort={sort} cat={cat} anon={anon} myUserId={me?.id ?? null} />
-    </main>
+          <FeedInfiniteList sort={sort} cat={cat} anon={anon} myUserId={me?.id ?? null} />
+        </main>
+      </div>
+    </div>
   );
 }

@@ -8,7 +8,15 @@ export default function LayoutClientWrapper({ children }: { children: React.Reac
   const pathname = usePathname();
   
   // Проверяем, является ли текущая страница юридической или страницей аутентификации
-  const isPageWithoutMenu = pathname === "/terms" || pathname === "/privacy" || pathname === "/signup" || pathname === "/signin" || pathname === "/forgot-password" || pathname === "/reset-password" || pathname === "/verify-email";
+  const isPageWithoutMenu =
+    pathname === "/" ||
+    pathname === "/terms" ||
+    pathname === "/privacy" ||
+    pathname === "/signup" ||
+    pathname === "/signin" ||
+    pathname === "/forgot-password" ||
+    pathname === "/reset-password" ||
+    pathname === "/verify-email";
 
   // Если это страница без меню, рендерим ТОЛЬКО контент (children)
   if (isPageWithoutMenu) {

@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap");
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -197,4 +198,207 @@ html.dark .hover\:bg-white:hover { background: rgba(255,255,255,0.06) !important
 .dark button:disabled,
 .dark a[aria-disabled="true"] {
   opacity: 0.72 !important;
+}
+
+/* =========================================
+   Home redesign shell
+   ========================================= */
+.redesign-page {
+  --rd-bg: #000000;
+  --rd-surface: #110f1a;
+  --rd-border: #2a2540;
+  --rd-purple: #7c3aed;
+  --rd-purple-light: #9d5cf5;
+  --rd-purple-subtle: rgba(124, 58, 237, 0.08);
+  --rd-white: #f4f0ff;
+  --rd-muted: #6b6580;
+  --rd-muted2: #8b82a8;
+  --rd-radius: 14px;
+  --rd-radius-sm: 9px;
+
+  position: relative;
+  min-height: 100vh;
+  background: var(--rd-bg);
+  color: var(--rd-white);
+  font-family: "DM Sans", sans-serif;
+}
+
+.redesign-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.6;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+}
+
+.redesign-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  height: 56px;
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--rd-border);
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(20px);
+}
+
+.redesign-logo {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--rd-white);
+  font-family: "Syne", sans-serif;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.redesign-logo span {
+  color: var(--rd-purple-light);
+}
+
+.redesign-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.redesign-btn-ghost,
+.redesign-btn-logout {
+  padding: 6px 14px;
+  border-radius: var(--rd-radius-sm);
+  border: 1px solid var(--rd-border);
+  background: transparent;
+  color: var(--rd-muted2);
+  font-size: 0.82rem;
+  line-height: 1;
+  text-decoration: none;
+  transition: all 0.16s ease;
+}
+
+.redesign-btn-ghost:hover {
+  color: var(--rd-white);
+  border-color: var(--rd-purple);
+}
+
+.redesign-btn-logout {
+  color: var(--rd-purple-light);
+  border-color: rgba(124, 58, 237, 0.3);
+}
+
+.redesign-btn-logout:hover {
+  background: var(--rd-purple-subtle);
+}
+
+.redesign-layout {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 20px;
+  display: flex;
+  gap: 24px;
+}
+
+.redesign-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+}
+
+.redesign-menu-label {
+  margin-bottom: 10px;
+  padding-left: 4px;
+  color: var(--rd-muted);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.redesign-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.redesign-nav a {
+  padding: 10px 13px;
+  border: 1px solid transparent;
+  border-radius: var(--rd-radius-sm);
+  color: var(--rd-muted2);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.16s ease;
+}
+
+.redesign-nav a:hover {
+  background: var(--rd-purple-subtle);
+  color: var(--rd-white);
+  border-color: var(--rd-border);
+}
+
+.redesign-nav a.active {
+  background: var(--rd-purple-subtle);
+  color: var(--rd-white);
+  border-color: rgba(124, 58, 237, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(124, 58, 237, 0.1);
+}
+
+.redesign-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.redesign-card {
+  background: var(--rd-surface);
+  border: 1px solid var(--rd-border);
+  border-radius: var(--rd-radius);
+  padding: 18px;
+}
+
+.redesign-filter-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.redesign-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.redesign-filter-label {
+  width: 90px;
+  flex-shrink: 0;
+  color: var(--rd-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.redesign-note {
+  color: var(--rd-muted);
+  font-size: 0.75rem;
+}
+
+@media (max-width: 960px) {
+  .redesign-layout {
+    flex-direction: column;
+  }
+
+  .redesign-sidebar {
+    width: 100%;
+  }
 }
