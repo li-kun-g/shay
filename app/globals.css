@@ -204,17 +204,19 @@ html.dark .hover\:bg-white:hover { background: rgba(255,255,255,0.06) !important
    Home redesign shell
    ========================================= */
 .redesign-page {
-  --rd-bg: #000000;
-  --rd-surface: #110f1a;
-  --rd-border: #2a2540;
+  --rd-bg: #f6f2ea;
+  --rd-surface: #ffffff;
+  --rd-border: rgba(17, 24, 39, 0.12);
   --rd-purple: #7c3aed;
   --rd-purple-light: #9d5cf5;
   --rd-purple-subtle: rgba(124, 58, 237, 0.08);
-  --rd-white: #f4f0ff;
-  --rd-muted: #6b6580;
-  --rd-muted2: #8b82a8;
+  --rd-white: #111827;
+  --rd-muted: #6b7280;
+  --rd-muted2: #374151;
   --rd-radius: 14px;
   --rd-radius-sm: 9px;
+  --rd-topbar-bg: rgba(255, 255, 255, 0.88);
+  --rd-drawer-bg: #ffffff;
 
   position: relative;
   min-height: 100vh;
@@ -243,7 +245,7 @@ html.dark .hover\:bg-white:hover { background: rgba(255,255,255,0.06) !important
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--rd-border);
-  background: rgba(0, 0, 0, 0.85);
+  background: var(--rd-topbar-bg);
   backdrop-filter: blur(20px);
 }
 
@@ -463,7 +465,7 @@ html.dark .hover\:bg-white:hover { background: rgba(255,255,255,0.06) !important
   width: min(82vw, 320px);
   height: 100%;
   border-right: 1px solid var(--rd-border);
-  background: #07070b;
+  background: var(--rd-drawer-bg);
   padding: 10px;
 }
 
@@ -507,6 +509,17 @@ html.dark .hover\:bg-white:hover { background: rgba(255,255,255,0.06) !important
 .redesign-page .redesign-sidebar .group-hover\:bg-gray-100:hover,
 .redesign-page .redesign-drawer .group-hover\:bg-gray-100:hover {
   background: rgba(124, 58, 237, 0.2) !important;
+}
+
+html.dark .redesign-page {
+  --rd-bg: #000000;
+  --rd-surface: #110f1a;
+  --rd-border: #2a2540;
+  --rd-white: #f4f0ff;
+  --rd-muted: #6b6580;
+  --rd-muted2: #8b82a8;
+  --rd-topbar-bg: rgba(0, 0, 0, 0.85);
+  --rd-drawer-bg: #07070b;
 }
 
 @media (max-width: 960px) {
