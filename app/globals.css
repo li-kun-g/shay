@@ -530,3 +530,34 @@ html.dark .hover\:bg-white:hover { background: rgba(255,255,255,0.06) !important
     display: none;
   }
 }
+
+@keyframes drawerIn {
+  from { transform: translateX(-24px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes drawerOut {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(-24px); opacity: 0; }
+}
+@keyframes fadeInBackdrop {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fadeOutBackdrop {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.redesign-drawer-overlay.opening .redesign-drawer-backdrop {
+  animation: fadeInBackdrop 220ms ease forwards;
+}
+.redesign-drawer-overlay.closing .redesign-drawer-backdrop {
+  animation: fadeOutBackdrop 220ms ease forwards;
+}
+
+.redesign-drawer-overlay.opening .redesign-drawer {
+  animation: drawerIn 220ms ease forwards;
+}
+.redesign-drawer-overlay.closing .redesign-drawer {
+  animation: drawerOut 220ms ease forwards;
+}

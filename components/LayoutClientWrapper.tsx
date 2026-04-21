@@ -19,7 +19,23 @@ function BurgerIcon({ open }: { open: boolean }) {
 export default function LayoutClientWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { data: session } = useSession();
+
   const [open, setOpen] = useState(false);
+  const [closing, setclosing] = useState(false);
+
+  function openMenu() {
+    setclosing(false);
+    setOpen(true);
+  }
+
+  function closeMenu() {
+    setclosing(true);
+    window.setTimeout(() => {
+      setOpen(false);
+      setclosing(false);
+    }, 220);
+  }
+  
 
   // Проверяем, является ли текущая страница юридической или страницей аутентификации
   const isPageWithoutMenu =
@@ -46,7 +62,7 @@ export default function LayoutClientWrapper({ children }: { children: React.Reac
           <button
             type="button"
             className="redesign-burger-btn"
-            onClick={() => setOpen(true)}
+            onClick={openMenu}
             aria-label="Open menu"
           >
             <BurgerIcon open={open} />
@@ -80,7 +96,7 @@ export default function LayoutClientWrapper({ children }: { children: React.Reac
           <button
             type="button"
             className="redesign-drawer-backdrop"
-            onClick={() => setOpen(false)}
+            onClick={closeMenu}
             aria-label="Close menu"
           />
           <div className="redesign-drawer">
@@ -89,12 +105,12 @@ export default function LayoutClientWrapper({ children }: { children: React.Reac
               <button
                 type="button"
                 className="redesign-btn-ghost"
-                onClick={() => setOpen(false)}
+                onClick={closeMenu}
               >
                 Close
               </button>
             </div>
-            <SideNav compact onNavigate={() => setOpen(false)} />
+            <SideNav compact onNavigate={closeMenu} />
           </div>
         </div>
       )}
