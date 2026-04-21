@@ -4,6 +4,7 @@ import { defineConfig } from "prisma/config";
 export default defineConfig({
   schema: "prisma/schema.prisma",
   datasource: {
-    url: process.env.DATABASE_URL, // REQUIRED for migrate dev
+    // Direct (non-pooled) connection required for migrations on Neon
+    url: process.env.DATABASE_URL_DIRECT ?? process.env.DATABASE_URL,
   },
 });

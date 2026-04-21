@@ -41,12 +41,16 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-enum PostCategory {
-  GOSSIPS
-  UNI
-  CONFESSIONS
-  MARKET
-  OTHER
+// ✅ Dynamic post tags managed by admins
+model PostTag {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  emoji     String   @default("")
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([order])
 }
 
 // ✅ NEW: Added for the moderation feature
@@ -126,7 +130,7 @@ model Post {
   // ✅ NEW: Defaulting to APPROVED so existing posts stay live
   status        PostStatus     @default(APPROVED)
 
-  category      PostCategory   @default(OTHER)
+  category      String         @default("OTHER")
 
   imageUrl      String?
   imageKey      String?
