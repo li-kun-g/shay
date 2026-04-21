@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import SideNav from "@/components/SideNav";
 import { signOut, useSession } from "next-auth/react";
+import Image from "next/image";
+
 
 function BurgerIcon({ open }: { open: boolean }) {
   return (
@@ -21,18 +23,18 @@ export default function LayoutClientWrapper({ children }: { children: React.Reac
   const { data: session } = useSession();
 
   const [open, setOpen] = useState(false);
-  const [closing, setclosing] = useState(false);
+  const [closing, setClosing] = useState(false);
 
   function openMenu() {
-    setclosing(false);
+    setClosing(false);
     setOpen(true);
   }
 
   function closeMenu() {
-    setclosing(true);
+    setClosing(true);
     window.setTimeout(() => {
       setOpen(false);
-      setclosing(false);
+      setClosing(false);
     }, 220);
   }
   
@@ -68,7 +70,9 @@ export default function LayoutClientWrapper({ children }: { children: React.Reac
             <BurgerIcon open={open} />
           </button>
           <Link href="/" className="redesign-logo">
-            Shay <span>☕</span>
+          <span>Shay</span>
+            <Image src="/shaylogo.png" alt="Shay Logo" width={50} height={50} />
+            
           </Link>
         </div>
 
@@ -92,7 +96,7 @@ export default function LayoutClientWrapper({ children }: { children: React.Reac
       </div>
 
       {open && (
-        <div className="redesign-drawer-overlay">
+        <div className={`redesign-drawer-overlay ${closing ? "closing" : "opening"}`}>
           <button
             type="button"
             className="redesign-drawer-backdrop"
