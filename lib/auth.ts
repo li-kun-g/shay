@@ -132,9 +132,15 @@ export const authOptions: NextAuthOptions = {
         const email = profile.email.toLowerCase();
         const isKimep = email.endsWith("@kimep.kz");
         const admins = process.env.KIMEPISH_ADMIN_EMAILS?.split(",") || [];
-        const testAccounts = ["alikhan.tuganbayevda@gmail.com"];
-        
-        return isKimep || admins.includes(email) || testAccounts.includes(email);
+       const testAccounts = [
+  "alikhan.tuganbayevda@gmail.com",
+  "crazyapefix@gmail.com",
+  "gingercccat@gmail.com",
+  "shabulovarsen0@gmail.com",
+  "ayorair@gmail.com",
+];
+
+return isKimep || admins.includes(email) || testAccounts.includes(email);
       }
       return true;
     },
