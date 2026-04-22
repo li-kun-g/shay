@@ -30,6 +30,14 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Shay ☕",
   description: "The limited edition's social network",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/logo_black_transparent.png", type: "image/png" },
+    ],
+    apple: "/logo_black_transparent.png",
+    shortcut: "/favicon.ico",
+  },
 };
 
 const LANG_COOKIE = "kimepish-lang";

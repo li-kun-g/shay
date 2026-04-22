@@ -39,12 +39,22 @@ type CommentItem = {
 
 const MODERATION_TIMER = 60000; // 1 minute
 
+type PostPreview = {
+  content: string;
+  anonymous: boolean;
+  authorUsername: string;
+  authorImage?: string | null;
+  authorEmoji?: string | null;
+  imageUrl?: string | null;
+};
+
 export default function CommentSheet(props: {
   open: boolean;
   onClose: () => void;
   postId: string;
+  postPreview?: PostPreview;
 }) {
-  const { open, onClose, postId } = props;
+  const { open, onClose, postId, postPreview } = props;
   const { t } = useI18n();
   const { status } = useSession();
 
@@ -53,7 +63,8 @@ export default function CommentSheet(props: {
   const [loading, setLoading] = useState(false);
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [content, setContent] = useState("");
-  const [anonymous, setAnonymous] = useState(true);
+  const [anonymous, setAnonymous] = useState(false);
+  const [fullImageUrl, setFullImageUrl] = useState<string | null>(null);
   const [showModerationMsg, setShowModerationMsg] = useState(false);
   const [selectedGif, setSelectedGif] = useState<SelectedGif | null>(null);
 
@@ -236,13 +247,9 @@ export default function CommentSheet(props: {
 
   if (!mounted || !open) return null;
 
-  const heightClass = showModerationMsg
-    ? "h-[400px]"
-    : "h-[78vh] sm:h-[88vh] max-h-[880px]";
-
   return createPortal(
     <>
-      <div className="fixed inset-0 z-[220] flex items-center justify-center p-3 sm:p-6">
+      <div className="fixed inset-0 z-[220] flex items-end justify-center">
         <button
           type="button"
           aria-label={t("common.close")}
@@ -254,14 +261,57 @@ export default function CommentSheet(props: {
           role="dialog"
           aria-modal="true"
           className={[
-            "relative z-[221] w-full max-w-2xl rounded-[2.5rem] border shadow-2xl",
+            "relative z-[221] w-full max-w-2xl rounded-t-[2rem] border-t border-x shadow-2xl",
             "bg-white dark:bg-[var(--surface)]",
             "border-gray-200 dark:border-[var(--border-strong)]",
-            "overflow-hidden flex flex-col transition-all duration-500",
-            heightClass,
+            "flex flex-col",
+            showModerationMsg
+              ? "h-[400px]"
+              : comments.length === 0 && !loading
+              ? "max-h-[85dvh] h-auto"
+              : "h-[85dvh]",
           ].join(" ")}
           onClick={(e) => e.stopPropagation()}
         >
+          {/* drag handle */}
+          <div className="shrink-0 flex justify-center pt-3 pb-1">
+            <div className="h-1.5 w-12 rounded-full bg-gray-200 dark:bg-white/10" />
+          </div>
+          {/* Post preview */}
+          {postPreview && !showModerationMsg && (
+            <div className="shrink-0 px-4 sm:px-6 py-3 border-b border-gray-100 dark:border-white/10 max-h-[45vh] overflow-y-auto">
+              <div className="flex items-center gap-2 mb-1.5">
+                <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-gray-100 dark:bg-white/10">
+                  {postPreview.anonymous ? (
+                    <span className="text-sm leading-none">☕</span>
+                  ) : postPreview.authorImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={postPreview.authorImage} alt="avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-sm leading-none">{postPreview.authorEmoji ?? "☕"}</span>
+                  )}
+                </div>
+                <span className="text-xs font-semibold text-[color:var(--text-muted)]">
+                  {postPreview.anonymous ? "Anonymous" : postPreview.authorUsername}
+                </span>
+              </div>
+              {postPreview.content && (
+                <p className="text-sm leading-relaxed text-[color:var(--foreground)]">
+                  {postPreview.content}
+                </p>
+              )}
+              {postPreview.imageUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={postPreview.imageUrl}
+                  alt="post"
+                  className="mt-2 rounded-xl w-full object-contain cursor-zoom-in"
+                  onClick={() => setFullImageUrl(postPreview.imageUrl!)}
+                />
+              )}
+            </div>
+          )}
+
           {showModerationMsg ? (
             <div className="flex flex-1 flex-col items-center justify-center p-8 text-center animate-in fade-in zoom-in duration-500">
               <div className="text-7xl mb-8">🍥</div>
@@ -290,7 +340,7 @@ export default function CommentSheet(props: {
 
               <div
                 ref={listRef}
-                className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 pb-3"
+                className={`overflow-y-auto px-4 sm:px-6 pb-3 ${comments.length > 0 || loading ? "flex-1 min-h-0" : ""}`}
               >
                 <List
                   loading={loading}
@@ -321,6 +371,31 @@ export default function CommentSheet(props: {
         </div>
       </div>
 
+      {/* Fullscreen image viewer */}
+      {fullImageUrl && createPortal(
+        <div
+          className="fixed inset-0 z-[600] flex items-center justify-center bg-black/90"
+          onClick={() => setFullImageUrl(null)}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={fullImageUrl}
+            alt="full"
+            className="max-w-full max-h-full object-contain select-none"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            type="button"
+            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition"
+            onClick={() => setFullImageUrl(null)}
+            aria-label="Close"
+          >
+            ✕
+          </button>
+        </div>,
+        document.body
+      )}
+
       <ConfirmDialog
         open={confirmOpen}
         title={t("comments.deleteTitle")}
@@ -343,8 +418,7 @@ export default function CommentSheet(props: {
 function Header({ title, onClose }: { title: string; onClose: () => void }) {
   const { t } = useI18n();
   return (
-    <div className="relative flex items-center justify-between border-b border-gray-200 dark:border-white/10 p-4 sm:p-6">
-      <div className="absolute left-1/2 top-2 h-1.5 w-16 -translate-x-1/2 rounded-full bg-gray-100 dark:bg-white/10 sm:hidden" />
+    <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 px-4 sm:px-6 py-3">
       <h2 className="text-base font-semibold">{title}</h2>
       <button
         type="button"
@@ -477,17 +551,25 @@ function Composer(props: {
   return (
     <div className="border-t border-gray-100 dark:border-white/5 pt-4">
       <div className="mb-3 flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => setAnonymous(!anonymous)}
-          className={`rounded-full border px-3 py-1 text-xs transition ${
-            anonymous
-              ? "border-black bg-black text-white"
-              : "bg-white dark:bg-transparent"
-          }`}
-        >
-          {anonymous ? t("composer.anonymousOn") : t("composer.anonymousOff")}
-        </button>
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <div
+            onClick={() => setAnonymous(!anonymous)}
+            className={`w-5 h-5 rounded border-2 flex items-center justify-center transition ${
+              anonymous
+                ? "bg-black border-black"
+                : "border-gray-300 dark:border-white/30"
+            }`}
+          >
+            {anonymous && (
+              <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </div>
+          <span className="text-xs text-[color:var(--text-muted)]">
+            Anonymous
+          </span>
+        </label>
 
         {status !== "authenticated" && (
           <span className="text-xs text-gray-400">
