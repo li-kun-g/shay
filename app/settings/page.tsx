@@ -6,12 +6,13 @@ import { authOptions } from "@/lib/auth";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getDict, type Lang } from "@/lib/i18n";
+import Image from "next/image";
 
 type SettingsCard = {
   title: string;
   description: string;
   href: string;
-  emoji: string;
+  icon: string;
   badge?: string;
 };
 
@@ -40,32 +41,32 @@ export default async function SettingsPage() {
       title: dict["settings.profile.title"],
       description: dict["settings.profile.desc"],
       href: "/settings/profile",
-      emoji: "👤",
+      icon: "/nav-icons/profile.svg",
     },
     {
       title: dict["settings.privacy.title"],
       description: dict["settings.privacy.desc"],
       href: "/settings/privacy",
-      emoji: "🔒",
+      icon: "/nav-icons/privacy.svg",
     },
     // Раздел Security удален, так как пароли больше не используются
     {
       title: dict["settings.language.titleShort"],
       description: dict["settings.language.desc"],
       href: "/settings/language",
-      emoji: "🌐",
+      icon: "/nav-icons/language.svg",
     },
     {
       title: dict["settings.theme.titleShort"],
       description: dict["settings.theme.desc"],
       href: "/settings/theme",
-      emoji: "🎨",
+      icon: "/nav-icons/theme.svg",
     },
     {
       title: dict["settings.support.title"],
       description: dict["settings.support.desc"],
       href: "/settings/support",
-      emoji: "💬",
+      icon: "/nav-icons/support.svg",
     },
   ];
 
@@ -103,10 +104,16 @@ export default async function SettingsPage() {
             className="group block rounded-2xl border bg-white p-4 shadow-sm transition hover:-translate-y-[1px] hover:shadow-md"
           >
             <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border bg-gray-50 text-lg">
-                {s.emoji}
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border bg-gray-50">
+                <Image
+                  src={s.icon}
+                  alt=""
+                  aria-hidden="true"
+                  width={20}
+                  height={20}
+                  className="h-5 w-5 object-contain"
+                />
               </div>
-
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="text-sm font-semibold text-gray-900">{s.title}</h2>
