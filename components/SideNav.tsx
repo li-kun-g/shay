@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useI18n } from "@/components/LanguageProvider";
@@ -16,18 +17,18 @@ export type NavItem = {
     | "nav.notifications"
     | "nav.friends"
     | "nav.settings";
-  emoji?: string;
+  icon: string;
 };
 
 const NAV: NavItem[] = [
-  { href: "/", key: "nav.feed", emoji: "☕" },
-  { href: "/events", key: "nav.events", emoji: "📅" },
-  { href: "/campus", key: "nav.myCampus", emoji: "🏫" },
-  { href: "/groups", key: "nav.groups", emoji: "👥" },
-  { href: "/messages", key: "nav.messages", emoji: "💬" },
-  { href: "/notifications", key: "nav.notifications", emoji: "🔔" },
-  { href: "/friends", key: "nav.friends", emoji: "🤝" },
-  { href: "/settings", key: "nav.settings", emoji: "⚙️" },
+  { href: "/", key: "nav.feed", icon: "/nav-icons/lenta.svg" },
+  { href: "/events", key: "nav.events", icon: "/nav-icons/iventy.svg" },
+  { href: "/campus", key: "nav.myCampus", icon: "/nav-icons/campus.svg" },
+  { href: "/groups", key: "nav.groups", icon: "/nav-icons/gruppy.svg" },
+  { href: "/messages", key: "nav.messages", icon: "/nav-icons/soobshcheniya.svg" },
+  { href: "/notifications", key: "nav.notifications", icon: "/nav-icons/uvedomleniya.svg" },
+  { href: "/friends", key: "nav.friends", icon: "/nav-icons/druzya.svg" },
+  { href: "/settings", key: "nav.settings", icon: "/nav-icons/nastroyki.svg" },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -104,7 +105,14 @@ export default function SideNav({
                           : "bg-white border-gray-200 group-hover:bg-gray-100",
                       ].join(" ")}
                     >
-                      {item.emoji ?? "•"}
+                      <Image
+                        src={item.icon}
+                        alt=""
+                        aria-hidden="true"
+                        width={20}
+                        height={20}
+                        className="h-5 w-5 object-contain"
+                      />
                     </span>
 
                     <span className={active ? "font-semibold truncate" : "font-medium truncate"}>
