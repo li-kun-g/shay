@@ -1,9 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
+import { DM_Sans } from "next/font/google";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useI18n } from "@/components/LanguageProvider";
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+});
 
 const featureIcons = [
   {
@@ -204,8 +211,15 @@ export default function SignInPage() {
   return (
     <main className="w-full bg-[#0a0a0a] text-[#f0f0f0]">
       <nav className="flex items-center justify-between border-b border-[#1e1e1e] px-5 py-5 sm:px-10">
-        <Link href="/" className="text-[18px] font-medium tracking-[-0.3px] text-white">
-          Shay ☕
+        <Link href="/" className="flex items-center gap-2 text-[18px] font-medium tracking-[-0.3px] text-white">
+          <span className="font-extrabold tracking-[-0.02em] text-[#AFA9EC]">Shay</span>
+          <Image
+            src="/logo_white_transparent.png"
+            alt="Shay logo"
+            width={36}
+            height={36}
+            className="h-9 w-9 object-contain"
+          />
         </Link>
 
         <Link
@@ -276,9 +290,9 @@ export default function SignInPage() {
           </button>
         </div>
       </section>
-      <section id="features" className="mx-auto max-w-[900px] px-6 py-20 sm:px-10">
+      <section id="features" className={`mx-auto max-w-[900px] px-6 py-20 sm:px-10 ${dmSans.className}`}>
         <p className="mb-3 text-[11px] font-medium uppercase tracking-[1.5px] text-[#534AB7]">{copy.whyTitle}</p>
-        <h2 className="mb-12 text-[32px] font-medium leading-[1.25] tracking-[-0.5px] text-white">
+        <h2 className="mb-12 text-[32px] font-semibold leading-[1.2] tracking-[-0.4px] text-white">
           {copy.whyHeadingTop}
           <br />
           {copy.whyHeadingBottom}
@@ -290,8 +304,8 @@ export default function SignInPage() {
               <div className="mb-4 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-[#1a1528]">
                 {feature.icon}
               </div>
-              <h3 className="mb-2 text-[14px] font-medium text-[#e8e8e8]">{feature.title}</h3>
-              <p className="text-[13px] leading-[1.6] text-[#555]">{feature.description}</p>
+              <h3 className="mb-2 text-[15px] font-bold tracking-[-0.01em] text-[#f2f0ff]">{feature.title}</h3>
+              <p className="text-[14px] font-medium leading-[1.65] text-[#9f99b8]">{feature.description}</p>
             </article>
           ))}
         </div>
