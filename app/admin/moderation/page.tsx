@@ -14,11 +14,11 @@ export default async function ModerationPage() {
 
   const dbUser = await prisma.user.findUnique({
     where: { email: session.user.email },
-    select: { isOfficial: true },
+    select: { isOfficial: true, role: true },
   });
 
-  if (!dbUser || dbUser.isOfficial !== true) {
-    notFound(); 
+  if (!dbUser || (dbUser.isOfficial !== true && dbUser.role !== "MODERATOR")) {
+    notFound();
   }
 
   const pendingPosts = await prisma.post.findMany({
