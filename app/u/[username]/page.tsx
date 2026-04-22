@@ -111,6 +111,8 @@ export default async function UserPage(props: {
     cookieLang && ["EN", "RU", "KK"].includes(cookieLang) ? cookieLang : "EN";
   const dict = getDict(lang);
 
+  const tags = await prisma.postTag.findMany({ orderBy: { order: "asc" } });
+
   const session = await getServerSession(authOptions);
   const myUserId =
     session?.user && "id" in session.user ? (session.user.id as string) : null;
@@ -321,7 +323,7 @@ export default async function UserPage(props: {
 
       {activeTab === "posts" && (
         <>
-          {isMe && <SpillComposer />}
+          {isMe && <SpillComposer tags={tags} />}
           <ProfilePostsInfiniteList username={user.username} myUserId={myUserId} />
         </>
       )}

@@ -18,7 +18,6 @@ import { getDict } from "@/lib/i18n";
 
 type SP = { sort?: string; cat?: string; anon?: string };
 
-const CAT_VALUES = new Set(["GOSSIPS", "UNI", "CONFESSIONS", "MARKET", "OTHER"]);
 const ANON_VALUES = new Set(["all", "anon", "non"]);
 
 const LANG_COOKIE = "kimepish-lang";
@@ -30,8 +29,11 @@ export default async function Home(props: { searchParams?: SP | Promise<SP> }) {
 
   const sort = sp?.sort === "top" ? "top" : "latest";
 
+  const tags = await prisma.postTag.findMany({ orderBy: { order: "asc" } });
+  const validSlugs = new Set(tags.map((tag: { slug: string }) => tag.slug));
+
   const rawCat = (sp?.cat ?? "").trim().toUpperCase();
-  const cat = CAT_VALUES.has(rawCat) ? rawCat : null;
+  const cat = validSlugs.has(rawCat) ? rawCat : null;
 
   const rawAnon = (sp?.anon ?? "").trim().toLowerCase();
   const anon = ANON_VALUES.has(rawAnon) ? (rawAnon as "all" | "anon" | "non") : "all";
@@ -53,31 +55,31 @@ export default async function Home(props: { searchParams?: SP | Promise<SP> }) {
 
   const dict = getDict(lang);
 
-  return (
-    <main className="redesign-main-content">
-      <div className="redesign-card">
-        <SpillComposer />
+return (
+  <main className="redesign-main-content">
+    <div className="redesign-card">
+      <SpillComposer tags={tags} />
+    </div>
+
+    <section className="redesign-card redesign-filter-card">
+      <div className="redesign-filter-row">
+        <span className="redesign-filter-label">{dict["feed.sort"]}</span>
+        <FeedSort />
+        {sort === "top" && <div className="redesign-note">{dict["feed.sortedByLikes"]}</div>}
       </div>
 
-      <section className="redesign-card redesign-filter-card">
-        <div className="redesign-filter-row">
-          <span className="redesign-filter-label">{dict["feed.sort"]}</span>
-          <FeedSort />
-          {sort === "top" && <div className="redesign-note">{dict["feed.sortedByLikes"]}</div>}
-        </div>
+      <div className="redesign-filter-row">
+        <span className="redesign-filter-label">{dict["feed.category"]}</span>
+        <CategoryFilter tags={tags} />
+      </div>
 
-        <div className="redesign-filter-row">
-          <span className="redesign-filter-label">{dict["feed.category"]}</span>
-          <CategoryFilter />
-        </div>
+      <div className="redesign-filter-row">
+        <span className="redesign-filter-label">{dict["feed.visibility"]}</span>
+        <AnonFilter />
+      </div>
+    </section>
 
-        <div className="redesign-filter-row">
-          <span className="redesign-filter-label">{dict["feed.visibility"]}</span>
-          <AnonFilter />
-        </div>
-      </section>
-
-      <FeedInfiniteList sort={sort} cat={cat} anon={anon} myUserId={me?.id ?? null} />
-    </main>
-  );
+    <FeedInfiniteList sort={sort} cat={cat} anon={anon} myUserId={me?.id ?? null} />
+  </main>
+);
 }

@@ -217,10 +217,6 @@ export default function SignInPage() {
       </nav>
 
       <section className="mx-auto max-w-[720px] px-6 pb-20 pt-24 text-center sm:px-10 sm:pt-[100px]">
-        <div className="mb-8 inline-flex items-center gap-[6px] rounded-full border border-[#3C3489] bg-[#1a1528] px-[14px] py-[5px] text-[12px] text-[#AFA9EC]">
-          <span className="h-[6px] w-[6px] shrink-0 rounded-full bg-[#7F77DD]" />
-          {copy.badge}
-        </div>
 
         <h1 className="mb-5 text-[44px] font-semibold leading-[1.1] tracking-[-1.5px] text-white sm:text-[56px]">
           {copy.titleTop}
