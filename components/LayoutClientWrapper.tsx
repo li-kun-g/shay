@@ -69,17 +69,17 @@ export default function LayoutClientWrapper({ children }: { children: React.Reac
           >
             <BurgerIcon open={open} />
           </button>
-          <Link href="/" className="redesign-logo">
+          <Link href="" className="redesign-logo">
             <span>Shay</span>
             <Image
-              src="/lightlogo.png"
+              src="/logo_black_transparent.png"
               alt="Shay logo light"
               className="block dark:hidden"
               width={50}
               height={50}
             />
             <Image
-              src="/shaylogo.png"
+              src="/logo_white_transparent.png"
               alt="Shay logo dark"
               className="hidden dark:block"
               width={50}
@@ -120,14 +120,14 @@ export default function LayoutClientWrapper({ children }: { children: React.Reac
               <span className="redesign-logo">
                 <span>Shay</span>
                 <Image
-                  src="/lightlogo.png"
+                  src="/logo_black_transparent.png"
                   alt="Shay logo light"
                   className="block dark:hidden"
                   width={40}
                   height={40}
                 />
                 <Image
-                  src="/shaylogo.png"
+                  src="/logo_white_transparent.png"
                   alt="Shay logo dark"
                   className="hidden dark:block"
                   width={40}
