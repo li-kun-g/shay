@@ -3,13 +3,13 @@
 import { useMemo, useState, useTransition } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import Image from "next/image";
 import { registerUser } from "@/app/actions/registerUser";
 import { normalizeUsername } from "@/lib/username";
 
 function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
-
 
 function isKimepEmail(email: string) {
   return /^[a-z0-9._%+-]+@kimep\.kz$/.test(normalizeEmail(email));
@@ -67,9 +67,30 @@ export default function SignUpPage() {
     normalizedUsername.length >= 3 &&
     emailLooksValid;
 
+  const SignUpHeader = (
+    <div className="mb-8 flex items-center justify-between border-b border-[#1e1e1e] pb-4">
+      <Link href="/" className="flex items-center gap-2 text-[18px] font-medium tracking-[-0.3px] text-white">
+        <span className="font-extrabold tracking-[-0.02em] text-[#AFA9EC]">Shay</span>
+        <Image
+          src="/logo_white_transparent.png"
+          alt="Shay logo"
+          width={36}
+          height={36}
+          className="h-9 w-9 object-contain"
+        />
+      </Link>
+      <Link href="/signin" className="text-[13px] text-[#777] transition hover:text-white">
+        Already have an account?
+      </Link>
+    </div>
+  );
+
   if (isSuccess) {
     return (
       <main className="min-h-screen bg-[#0a0a0a] px-4 py-10 text-[#f0f0f0] sm:px-8">
+        <div className="mx-auto w-full max-w-6xl">
+          {SignUpHeader}
+        </div>
         <div className="mx-auto w-full max-w-md rounded-3xl border border-[#2a2560] bg-[#100f1e] p-8 text-center">
           <div className="mb-4 text-4xl">📧</div>
           <h1 className="text-2xl font-medium text-white">Check your email</h1>
@@ -96,14 +117,7 @@ export default function SignUpPage() {
   return (
     <main className="min-h-screen bg-[#0a0a0a] text-[#f0f0f0]">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8 sm:py-10">
-        <div className="mb-8 flex items-center justify-between border-b border-[#1e1e1e] pb-4">
-          <Link href="/" className="text-[18px] font-medium tracking-[-0.3px] text-white">
-            Shay ☕
-          </Link>
-          <Link href="/signin" className="text-[13px] text-[#777] transition hover:text-white">
-            Already have an account?
-          </Link>
-        </div>
+        {SignUpHeader}
 
         <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
           <section>
@@ -111,12 +125,12 @@ export default function SignUpPage() {
               <span className="h-[6px] w-[6px] rounded-full bg-[#7F77DD]" />
               Registration is open for KIMEP students
             </div>
-            <h1 className="text-[42px] font-medium leading-[1.1] tracking-[-1.5px] text-white sm:text-[56px]">
+            <h1 className="text-[42px] font-extrabold leading-[1.1] tracking-[-1.5px] text-white sm:text-[56px]">
               Join Shay with
               <br />
               <span className="text-[#7F77DD]">Google first</span>
             </h1>
-            <p className="mt-5 max-w-[520px] text-[16px] leading-[1.7] text-[#666] sm:text-[17px]">
+            <p className="mt-5 max-w-[520px]  text-[16px] font-medium leading-[1.7] text-[#666] sm:text-[17px]">
               Independent student network. No ads, no password storage, real university community only.
             </p>
           </section>

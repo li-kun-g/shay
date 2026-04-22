@@ -35,7 +35,7 @@ export default function LayoutClientWrapper({ children }: { children: React.Reac
     window.setTimeout(() => {
       setOpen(false);
       setClosing(false);
-    }, 220);
+    }, 260);
   }
   
 
