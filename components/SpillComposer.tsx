@@ -89,7 +89,7 @@ export default function SpillComposer({ tags }: { tags: PostTag[] }) {
 
   return (
     <>
-      <div className="hidden sm:block">
+      <div className="block">
         <ComposerCard
           content={content}
           setContent={setContent}
@@ -113,7 +113,7 @@ export default function SpillComposer({ tags }: { tags: PostTag[] }) {
       </div>
 
       <button
-        className="sm:hidden fixed bottom-5 right-5 z-[120] rounded-full bg-black text-white px-5 py-3 shadow-lg active:scale-95 transition"
+        className="hidden fixed bottom-5 right-5 z-[120] rounded-full bg-black text-white px-5 py-3 shadow-lg active:scale-95 transition"
         onClick={() => setOpen(true)}
         aria-label={t("composer.open")}
       >

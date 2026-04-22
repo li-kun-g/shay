@@ -10,6 +10,7 @@ function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
+
 function isKimepEmail(email: string) {
   return /^[a-z0-9._%+-]+@kimep\.kz$/.test(normalizeEmail(email));
 }
@@ -121,8 +122,7 @@ export default function SignUpPage() {
           </section>
 
           <section className="rounded-[20px] border border-[#2a2560] bg-[#100f1e] p-6 sm:p-8">
-            <h2 className="text-[28px] font-medium tracking-[-0.5px] text-white">Create account</h2>
-            <p className="mt-2 text-sm text-[#777]">Start with Google, or continue with email below.</p>
+            <p className="mt-2 text-sm text-[#777]">Start with Google.</p>
 
             <button
               onClick={handleGoogleSignUp}
@@ -130,7 +130,7 @@ export default function SignUpPage() {
               className="mt-6 inline-flex w-full items-center justify-center gap-[10px] rounded-[10px] bg-[#f8f8f8] px-6 py-[14px] text-[15px] font-medium text-[#1a1a1a] transition hover:bg-[#e8e8e8] disabled:opacity-60"
             >
               {isGoogleLoading ? (
-                <span className="animate-spin">⏳</span>
+                <span className="animate-spin">⏳</span> 
               ) : (
                 <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -193,13 +193,7 @@ export default function SignUpPage() {
                 <p className="mt-1 text-xs text-[#666]">Use at least 8 characters.</p>
               </div>
 
-              <button
-                onClick={onSubmit}
-                disabled={isPending || !canSubmit}
-                className="w-full rounded-xl bg-[#7F77DD] px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
-              >
-                {isPending ? "Creating..." : "Sign up with email"}
-              </button>
+
 
               <p className="pt-1 text-center text-sm text-[#777]">
                 Already have an account?{" "}

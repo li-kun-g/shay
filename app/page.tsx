@@ -55,31 +55,31 @@ export default async function Home(props: { searchParams?: SP | Promise<SP> }) {
 
   const dict = getDict(lang);
 
-  return (
-    <>
-      <div className="redesign-card">
-        <SpillComposer tags={tags} />
+return (
+  <main className="redesign-main-content">
+    <div className="redesign-card">
+      <SpillComposer tags={tags} />
+    </div>
+
+    <section className="redesign-card redesign-filter-card">
+      <div className="redesign-filter-row">
+        <span className="redesign-filter-label">{dict["feed.sort"]}</span>
+        <FeedSort />
+        {sort === "top" && <div className="redesign-note">{dict["feed.sortedByLikes"]}</div>}
       </div>
 
-      <section className="redesign-card redesign-filter-card">
-        <div className="redesign-filter-row">
-          <span className="redesign-filter-label">{dict["feed.sort"]}</span>
-          <FeedSort />
-          {sort === "top" && <div className="redesign-note">{dict["feed.sortedByLikes"]}</div>}
-        </div>
+      <div className="redesign-filter-row">
+        <span className="redesign-filter-label">{dict["feed.category"]}</span>
+        <CategoryFilter tags={tags} />
+      </div>
 
-        <div className="redesign-filter-row">
-          <span className="redesign-filter-label">{dict["feed.category"]}</span>
-          <CategoryFilter tags={tags} />
-        </div>
+      <div className="redesign-filter-row">
+        <span className="redesign-filter-label">{dict["feed.visibility"]}</span>
+        <AnonFilter />
+      </div>
+    </section>
 
-        <div className="redesign-filter-row">
-          <span className="redesign-filter-label">{dict["feed.visibility"]}</span>
-          <AnonFilter />
-        </div>
-      </section>
-
-      <FeedInfiniteList sort={sort} cat={cat} anon={anon} myUserId={me?.id ?? null} />
-    </>
-  );
+    <FeedInfiniteList sort={sort} cat={cat} anon={anon} myUserId={me?.id ?? null} />
+  </main>
+);
 }

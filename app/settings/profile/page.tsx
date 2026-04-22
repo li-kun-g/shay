@@ -1,5 +1,7 @@
 "use client";
 
+
+
 import { useEffect, useMemo, useState, useTransition, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -126,6 +128,14 @@ export default function ProfileSettingsPage() {
     if (status !== "authenticated" || !session?.user) return;
     setErrorMsg(null); // Clear previous errors
 
+    const normalizedYear = (() => {
+      const raw = yearOfStudy.trim();
+      if (raw === "") return null;
+      const parsed = Number.parseInt(raw, 10);
+      if (Number.isNaN(parsed)) return null;
+      return Math.min(4, Math.max(1, parsed)); 
+    })();
+
     startTransition(async () => {
       const res = await updateProfile({
         name: name || undefined,
@@ -133,7 +143,7 @@ export default function ProfileSettingsPage() {
         image: image || undefined,
         status: statusText || undefined,
         major: major || undefined,
-        yearOfStudy: yearOfStudy.trim() === "" ? null : Number(yearOfStudy),
+        yearOfStudy: normalizedYear,
         emoji: emoji || "☕",
         college,
       });
@@ -316,9 +326,19 @@ export default function ProfileSettingsPage() {
         <div className="flex gap-3">
           <input
             placeholder={t("settings.profile.yearPlaceholder")}
+            type="number" min={1} max={4} step={1}
             inputMode="numeric"
             value={yearOfStudy}
-            onChange={(e) => setYearOfStudy(e.target.value)}
+            onChange={(e) => {
+            const raw = e.target.value;
+            if (raw === "") {
+              setYearOfStudy("");
+              return;
+            }
+            const parsed = Number.parseInt(raw, 10);
+            if (Number.isNaN(parsed)) return;
+            setYearOfStudy(String(Math.min(4, Math.max(1, parsed))));
+          }}
             className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-black dark:bg-zinc-900 dark:border-zinc-800 dark:text-white dark:focus:ring-white"
           />
 

@@ -68,7 +68,7 @@ const landingCopy = {
     titleAccent: "edition",
     subtitle:
       "Shay is the independent social network built exclusively for university students. Share ideas, find your people, stay in the loop.",
-    createAccount: "Create account",
+
     whyTitle: "Why Shay",
     whyHeadingTop: "Built for students,",
     whyHeadingBottom: "not advertisers",
