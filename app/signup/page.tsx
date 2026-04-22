@@ -206,9 +206,6 @@ export default function SignUpPage() {
                 />
                 <p className="mt-1 text-xs text-[#666]">Use at least 8 characters.</p>
               </div>
-
-
-
               <p className="pt-1 text-center text-sm text-[#777]">
                 Already have an account?{" "}
                 <Link className="underline hover:text-white" href="/signin">
