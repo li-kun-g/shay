@@ -15,6 +15,7 @@ type ConversationMemberItem = {
   user: {
     username: string;
     name: string | null;
+    image: string | null;
   };
 };
 
@@ -25,6 +26,7 @@ type ConversationMessageItem = {
   author: {
     id: string;
     username: string;
+    image: string | null;
   };
 };
 
@@ -59,13 +61,13 @@ export default async function ThreadPage(props: {
       members: {
         select: {
           userId: true,
-          user: { select: { username: true, name: true } },
+          user: { select: { username: true, name: true, image: true } },
         },
       },
       messages: {
         orderBy: { createdAt: "asc" },
         take: 100,
-        include: { author: { select: { id: true, username: true } } },
+        include: { author: { select: { id: true, username: true, image: true } } },
       },
     },
   })) as ConversationPageData | null;
@@ -130,20 +132,53 @@ export default async function ThreadPage(props: {
                 : "Administration"
               : `@${m.author.username}`;
 
+            const avatarSrc = m.author?.image ?? null;
+            const avatarFallback = support
+              ? mine
+                ? "Y"
+                : "A"
+              : (m.author.username?.[0] ?? "?").toUpperCase();
+
             return (
               <div
                 key={m.id}
-                className={"text-sm " + (mine ? "text-right" : "text-left")}
+                className={"flex items-end gap-2 text-sm " + (mine ? "justify-end" : "justify-start")}
               >
-                <div className="text-xs text-gray-500">{label}</div>
-                <div
-                  className={
-                    "inline-block rounded-2xl px-3 py-2 border " +
-                    (mine ? "bg-black text-white" : "bg-white dark:bg-transparent")
-                  }
-                >
-                  {m.text}
+                {!mine && (
+                  <div className="h-7 w-7 shrink-0 overflow-hidden rounded-full border bg-gray-100">
+                    {avatarSrc ? (
+                      <img src={avatarSrc} alt={label} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-[11px] font-semibold text-gray-600">
+                        {avatarFallback}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className={mine ? "text-right" : "text-left"}>
+                  <div className="text-xs text-gray-500">{label}</div>
+                  <div
+                    className={
+                      "inline-block rounded-2xl px-3 py-2 border " +
+                      (mine ? "bg-black text-white" : "bg-white dark:bg-transparent")
+                    }
+                  >
+                    {m.text}
+                  </div>
                 </div>
+
+                {mine && (
+                  <div className="h-7 w-7 shrink-0 overflow-hidden rounded-full border bg-gray-100">
+                    {avatarSrc ? (
+                      <img src={avatarSrc} alt={label} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-[11px] font-semibold text-gray-600">
+                        {avatarFallback}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
