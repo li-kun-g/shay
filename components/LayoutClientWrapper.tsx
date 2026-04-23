@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import SideNav from "@/components/SideNav";
@@ -24,6 +24,13 @@ export default function LayoutClientWrapper({ children }: { children: React.Reac
 
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
+
+  const [topbarLoading, setTopbarLoading] = useState(false);
+  useEffect(() => {
+    setTopbarLoading(true);
+    const timer = window.setTimeout(() => setTopbarLoading(false), 650);
+    return () => window.clearTimeout(timer);
+  }, [pathname]);
 
   function openMenu() {
     setClosing(false);
@@ -98,6 +105,13 @@ export default function LayoutClientWrapper({ children }: { children: React.Reac
             Log out
           </button>
         </div>
+        <div
+          className={
+            "redesign-topbar-loader " + (topbarLoading ? "is-active" : "")
+          }
+          style={{ position: "absolute", left: 0, right: 0, bottom: 0 }}
+          aria-hidden="true"
+        />
       </header>
 
       <div className="redesign-layout">

@@ -119,8 +119,8 @@ export default async function MessagesPage() {
   const unreadMap = new Map(unreadCounts);
 
   return (
-    <main className="mx-auto max-w-md px-3 py-4 md:max-w-2xl md:px-6 space-y-4">
-      <div className="flex items-center justify-between">
+    <main className="flex flex-col items-center gap-2">
+
         <h1 className="text-xl font-semibold">Messages</h1>
         <div className="flex gap-2">
           <Link href="/messages/new" className="rounded-xl border px-3 py-2 text-sm">
@@ -133,7 +133,7 @@ export default async function MessagesPage() {
             New Group
           </Link>
         </div>
-      </div>
+
 
       <div className="space-y-2">
         {visibleConversations.map((c: ConversationItem) => {

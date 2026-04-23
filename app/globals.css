@@ -249,6 +249,50 @@ html.dark .hover\:bg-white:hover { background: rgba(255,255,255,0.06) !important
   backdrop-filter: blur(20px);
 }
 
+.redesign-topbar-loader {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.redesign-topbar-loader::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -35%;
+  width: 35%;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    #7c3aed 30%,
+    #a78bfa 60%,
+    transparent 100%
+  );
+}
+
+.redesign-topbar-loader.is-active {
+  opacity: 1;
+}
+
+.redesign-topbar-loader.is-active::before {
+  animation: topbar-loader-slide 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes topbar-loader-slide {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(420%);
+  }
+}
+
 .redesign-topbar-left {
   display: flex;
   align-items: center;
@@ -414,6 +458,21 @@ html.dark .hover\:bg-white:hover { background: rgba(255,255,255,0.06) !important
   border: 1px solid var(--rd-border);
   border-radius: var(--rd-radius);
   padding: 9px;
+}
+
+.redesign-post-card {
+  background: var(--rd-surface);
+  border-color: var(--rd-border);
+}
+
+html.dark .redesign-post-card {
+  background: linear-gradient(
+    180deg,
+    rgba(124, 58, 237, 0.14) 0%,
+    rgba(124, 58, 237, 0.08) 100%
+  ) !important;
+  border-color: rgba(124, 58, 237, 0.30) !important;
+  box-shadow: inset 0 0 0 1px rgba(124, 58, 237, 0.10);
 }
 
 .redesign-filter-card {
