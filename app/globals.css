@@ -460,6 +460,21 @@ html.dark .hover\:bg-white:hover { background: rgba(255,255,255,0.06) !important
   padding: 18px;
 }
 
+.redesign-post-card {
+  background: var(--rd-surface);
+  border-color: var(--rd-border);
+}
+
+html.dark .redesign-post-card {
+  background: linear-gradient(
+    180deg,
+    rgba(124, 58, 237, 0.14) 0%,
+    rgba(124, 58, 237, 0.08) 100%
+  ) !important;
+  border-color: rgba(124, 58, 237, 0.30) !important;
+  box-shadow: inset 0 0 0 1px rgba(124, 58, 237, 0.10);
+}
+
 .redesign-filter-card {
   display: flex;
   flex-direction: column;

@@ -160,7 +160,7 @@ export default function Shaipost(props: {
   }
 
   return (
-    <div className="rounded-3xl p-4 shadow-sm border k-surface k-border-strong">
+    <div className="rounded-3xl p-4 shadow-sm border k-surface k-border-strong redesign-post-card">
       <div className="flex items-center gap-2 mb-2">
         <div className="w-[1.25em] h-[1.25em] rounded-full overflow-hidden flex items-center justify-center shrink-0 align-middle">
           {post.anonymous ? (
