@@ -86,6 +86,7 @@ export async function GET(req: Request) {
   // ✅ MODIFIED: Initialize where with status: "APPROVED"
   let where: Record<string, any> = {
     status: "APPROVED",
+    deletedAt: null,
   };
 
   if (cat) where.category = cat;

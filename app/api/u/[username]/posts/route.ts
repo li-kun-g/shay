@@ -73,6 +73,13 @@ export async function GET(
   const myId =
     session?.user && "id" in session.user ? (session.user.id as string) : null;
 
+  const viewer = myId
+    ? await prisma.user.findUnique({
+        where: { id: myId },
+        select: { isOfficial: true },
+      })
+    : null;
+
   const user = await prisma.user.findUnique({
     where: { username },
     select: { id: true },
@@ -82,7 +89,19 @@ export async function GET(
     return NextResponse.json({ items: [], nextCursor: null });
   }
 
-  let where: Record<string, unknown> = { authorId: user.id, anonymous: false };
+  const isOwner = myId === user.id;
+  const isAdmin = !!viewer?.isOfficial;
+
+  // Everyone only sees APPROVED posts.
+  // Owner and admins also see anon posts; others only see non-anon.
+  const anonFilter = isOwner || isAdmin ? {} : { anonymous: false };
+
+  let where: Record<string, unknown> = {
+    authorId: user.id,
+    status: "APPROVED",
+    deletedAt: null,
+    ...anonFilter,
+  };
 
   const orderBy: Array<Record<string, unknown>> = [
     { createdAt: "desc" },

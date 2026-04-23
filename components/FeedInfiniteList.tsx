@@ -90,7 +90,7 @@ export default function FeedInfiniteList(props: {
   }, [nextCursor, done, loading, baseUrl]);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-1">
       {items.map((post: any) => (
         <Shaipost key={post.id} post={post} myUserId={myUserId} />
       ))}
