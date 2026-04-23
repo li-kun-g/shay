@@ -403,7 +403,7 @@ html.dark .hover\:bg-white:hover { background: rgba(255,255,255,0.06) !important
   max-width: 760px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 8px;
 }
 
 .redesign-menu-label {
@@ -457,7 +457,7 @@ html.dark .hover\:bg-white:hover { background: rgba(255,255,255,0.06) !important
   background: var(--rd-surface);
   border: 1px solid var(--rd-border);
   border-radius: var(--rd-radius);
-  padding: 18px;
+  padding: 9px;
 }
 
 .redesign-post-card {
@@ -478,7 +478,7 @@ html.dark .redesign-post-card {
 .redesign-filter-card {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 7px;
 }
 
 .redesign-filter-row {
@@ -598,7 +598,7 @@ html.dark .redesign-page {
 
   .redesign-main-content {
     max-width: 680px;
-    gap: 14px;
+    gap: 8px;
   }
 
   .redesign-header-right .redesign-btn-ghost {

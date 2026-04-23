@@ -5,12 +5,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
-type PostCategory = "GOSSIPS" | "UNI" | "CONFESSIONS" | "MARKET" | "OTHER";
-
 export async function createPost(input: {
   content: string;
   anonymous: boolean;
-  category: PostCategory;
+  category: string;
   imageUrl?: string | null;
   imageKey?: string | null;
 }) {
@@ -42,7 +40,7 @@ export async function createPost(input: {
       data: {
         content,
         anonymous: input.anonymous,
-        category: input.category as any,
+        category: input.category,
         authorId: me.id,
         imageUrl,
         imageKey,

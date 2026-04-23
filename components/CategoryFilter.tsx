@@ -2,26 +2,19 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useI18n } from "@/components/LanguageProvider";
 
-export type CategoryKey = "ALL" | "GOSSIPS" | "UNI" | "CONFESSIONS" | "MARKET" | "OTHER";
+export type PostTag = { id: string; name: string; slug: string; emoji: string; order: number };
 
-export default function CategoryFilter() {
-  const { t } = useI18n();
-
+export default function CategoryFilter({ tags }: { tags: PostTag[] }) {
   const pathname = usePathname();
   const sp = useSearchParams();
 
-  const raw = (sp.get("cat") ?? "ALL").toUpperCase();
-  const cat: CategoryKey =
-    raw === "ALL" || raw === "GOSSIPS" || raw === "UNI" || raw === "CONFESSIONS" || raw === "MARKET" || raw === "OTHER"
-      ? (raw as CategoryKey)
-      : "ALL";
+  const current = (sp.get("cat") ?? "ALL").toUpperCase();
 
-  function hrefFor(nextCat: CategoryKey) {
+  function hrefFor(slug: string) {
     const params = new URLSearchParams(sp.toString());
-    if (nextCat === "ALL") params.delete("cat");
-    else params.set("cat", nextCat);
+    if (slug === "ALL") params.delete("cat");
+    else params.set("cat", slug);
     params.delete("cursor");
     const qs = params.toString();
     return qs ? `${pathname}?${qs}` : pathname;
@@ -29,29 +22,22 @@ export default function CategoryFilter() {
 
   const pill = (active: boolean) =>
     [
-      "inline-flex shrink-0 items-center rounded-full border px-3 py-1.5 text-sm transition whitespace-nowrap",
+      "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition whitespace-nowrap",
       active
         ? "bg-black text-white border-black shadow-sm"
-        : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50",
+        : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50 dark:bg-transparent dark:border-[var(--border-strong)] dark:text-gray-200 dark:hover:bg-white/10",
     ].join(" ");
-
-  const label = (k: CategoryKey) => {
-    if (k === "ALL") return t("feed.all");
-    if (k === "GOSSIPS") return t("cat.gossips");
-    if (k === "UNI") return t("cat.uni");
-    if (k === "CONFESSIONS") return t("cat.confessions");
-    if (k === "MARKET") return t("cat.market");
-    return t("cat.other");
-  };
-
-  const keys: CategoryKey[] = ["ALL", "GOSSIPS", "UNI", "CONFESSIONS", "MARKET", "OTHER"];
 
   return (
     <div className="-mx-1 overflow-x-auto px-1">
       <div className="flex w-max min-w-full gap-2">
-        {keys.map((k) => (
-          <Link key={k} href={hrefFor(k)} className={pill(cat === k)}>
-            {label(k)}
+        <Link href={hrefFor("ALL")} className={pill(current === "ALL")}>
+          All
+        </Link>
+        {tags.map((tag) => (
+          <Link key={tag.slug} href={hrefFor(tag.slug)} className={pill(current === tag.slug)}>
+            {tag.emoji && <span>{tag.emoji}</span>}
+            {tag.name}
           </Link>
         ))}
       </div>

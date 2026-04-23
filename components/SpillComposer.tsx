@@ -9,24 +9,17 @@ import { useI18n } from "@/components/LanguageProvider";
 const MAX_CHARS = 280;
 const MODERATION_TIMER = 60000; // 1 minute
 
-const POST_CATEGORIES = ["GOSSIPS", "UNI", "CONFESSIONS", "MARKET", "OTHER"] as const;
-type PostCategory = (typeof POST_CATEGORIES)[number];
+export type PostTag = { id: string; name: string; slug: string; emoji: string; order: number };
 
-const CATEGORY_OPTIONS: { value: PostCategory; labelKey: string }[] = [
-  { value: "GOSSIPS", labelKey: "cat.gossips" },
-  { value: "UNI", labelKey: "cat.uni" },
-  { value: "CONFESSIONS", labelKey: "cat.confessions" },
-  { value: "MARKET", labelKey: "cat.market" },
-  { value: "OTHER", labelKey: "cat.other" },
-];
-
-export default function SpillComposer() {
+export default function SpillComposer({ tags }: { tags: PostTag[] }) {
   const { t } = useI18n();
+
+  const defaultSlug = tags[0]?.slug ?? "OTHER";
 
   const [open, setOpen] = useState(false);
   const [content, setContent] = useState("");
   const [anonymous, setAnonymous] = useState(true);
-  const [category, setCategory] = useState<PostCategory>("GOSSIPS");
+  const [category, setCategory] = useState(defaultSlug);
   const [image, setImage] = useState<UploadedPostImage | null>(null);
   const [showModerationMsg, setShowModerationMsg] = useState(false);
 
@@ -107,6 +100,7 @@ export default function SpillComposer() {
           }}
           category={category}
           setCategory={setCategory}
+          tags={tags}
           remaining={remaining}
           canPost={canSubmit}
           isPending={isPending}
@@ -160,6 +154,7 @@ export default function SpillComposer() {
                 }}
                 category={category}
                 setCategory={setCategory}
+                tags={tags}
                 remaining={remaining}
                 canPost={canSubmit}
                 isPending={isPending}
@@ -183,8 +178,9 @@ function ComposerCard(props: {
   setContent: (v: string) => void;
   anonymous: boolean;
   setAnonymous: (v: boolean) => void;
-  category: PostCategory;
-  setCategory: (v: PostCategory) => void;
+  category: string;
+  setCategory: (v: string) => void;
+  tags: PostTag[];
   remaining: number;
   canPost: boolean;
   isPending: boolean;
@@ -279,12 +275,12 @@ function ComposerCard(props: {
           <select
             value={category}
             disabled={isPending}
-            onChange={(e) => setCategory(e.target.value as PostCategory)}
+            onChange={(e) => setCategory(e.target.value)}
             className="rounded-full border px-3 py-1 text-sm bg-white dark:bg-transparent"
           >
-            {CATEGORY_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {t(o.labelKey as any)}
+            {props.tags.map((tag) => (
+              <option key={tag.slug} value={tag.slug}>
+                {tag.emoji ? `${tag.emoji} ${tag.name}` : tag.name}
               </option>
             ))}
           </select>
@@ -318,9 +314,9 @@ function ComposerCard(props: {
             type="button"
             onClick={onSubmit}
             disabled={!canPost}
-            className="w-[80px] rounded-xl bg-black px-4 py-2 text-sm text-white disabled:opacity-50 transition active:scale-95"
+            className="rounded-xl border px-4 py-2 text-sm"
           >
-            {isPending ? t("composer.posting") : t("composer.spill")}
+            {isPending ? t("composer.posting") : `${t("composer.spill")} ☕`}
           </button>
         </div>
       </div>

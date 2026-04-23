@@ -65,7 +65,6 @@ function encodeCursor(obj: { createdAt?: string; id?: string; offset?: number })
 }
 
 const TAKE = 15;
-const CAT_VALUES = new Set(["GOSSIPS", "UNI", "CONFESSIONS", "MARKET", "OTHER"]);
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -73,7 +72,8 @@ export async function GET(req: Request) {
   const sort = parseSort(searchParams.get("sort"));
 
   const rawCat = (searchParams.get("cat") ?? "").trim().toUpperCase();
-  const cat = CAT_VALUES.has(rawCat) ? rawCat : null;
+  // Accept any non-empty slug — tags are admin-managed
+  const cat = rawCat.length > 0 ? rawCat : null;
 
   const anon = parseAnon((searchParams.get("anon") ?? "").trim().toLowerCase());
 
@@ -86,6 +86,7 @@ export async function GET(req: Request) {
   // ✅ MODIFIED: Initialize where with status: "APPROVED"
   let where: Record<string, any> = {
     status: "APPROVED",
+    deletedAt: null,
   };
 
   if (cat) where.category = cat;

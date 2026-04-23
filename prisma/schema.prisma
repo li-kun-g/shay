@@ -41,12 +41,16 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-enum PostCategory {
-  GOSSIPS
-  UNI
-  CONFESSIONS
-  MARKET
-  OTHER
+// ✅ Dynamic post tags managed by admins
+model PostTag {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  emoji     String   @default("")
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([order])
 }
 
 // ✅ NEW: Added for the moderation feature
@@ -105,6 +109,7 @@ model User {
   professorVotes         ProfessorVote[]
   sessions               Session[]
   postReactions          PostReaction[]
+  postReports            PostReport[]
   campusStatus           CampusStatus?
   campusStatusUpdatedAt  DateTime?
   campusStatusExpiresAt  DateTime?
@@ -126,7 +131,7 @@ model Post {
   // ✅ NEW: Defaulting to APPROVED so existing posts stay live
   status        PostStatus     @default(APPROVED)
 
-  category      PostCategory   @default(OTHER)
+  category      String         @default("OTHER")
 
   imageUrl      String?
   imageKey      String?
@@ -135,10 +140,12 @@ model Post {
   author        User           @relation(fields: [authorId], references: [id])
 
   createdAt     DateTime       @default(now())
+  deletedAt     DateTime?
 
   comments      Comment[]
   likes         Like[]
   postReactions PostReaction[]
+  reports       PostReport[]
 
   @@index([category, createdAt])
   @@index([authorId, createdAt])
@@ -466,6 +473,19 @@ model PostReaction {
   @@unique([postId, userId, type])
   @@index([postId])
   @@index([userId])
+}
+
+model PostReport {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([postId])
 }
 
 model PasswordResetToken {
