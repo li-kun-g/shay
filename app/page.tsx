@@ -56,12 +56,10 @@ export default async function Home(props: { searchParams?: SP | Promise<SP> }) {
   const dict = getDict(lang);
 
 return (
-  <main className="redesign-main-content">
-    <div className="redesign-card">
-      <SpillComposer tags={tags} />
-    </div>
+<main className="redesign-main-content">
+  <SpillComposer tags={tags} />
 
-    <section className="redesign-card redesign-filter-card">
+  <section className="redesign-card redesign-filter-card">
       <div className="redesign-filter-row">
         <span className="redesign-filter-label">{dict["feed.sort"]}</span>
         <FeedSort />
