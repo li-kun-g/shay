@@ -87,41 +87,19 @@ export default function SpillComposer({ tags }: { tags: PostTag[] }) {
     });
   }
 
-  return (
-    <>
-      <div className="block">
-        <ComposerCard
-          content={content}
-          setContent={setContent}
-          anonymous={anonymous}
-          setAnonymous={(v) => {
-            setAnonymous(v);
-            if (v) setImage(null);
-          }}
-          category={category}
-          setCategory={setCategory}
-          tags={tags}
-          remaining={remaining}
-          canPost={canSubmit}
-          isPending={isPending}
-          onSubmit={onSubmit}
-          image={image}
-          setImage={setImage}
-          showModerationMsg={showModerationMsg}
-          onManualClose={resetAndClose}
-        />
-      </div>
+return (
+  <>
+    <button
+      type="button"
+      className="fixed bottom-6 right-6 z-[120] rounded-full border border-purple-900/60 bg-black px-7 py-4 text-lg font-semibold text-white shadow-[0_0_30px_rgba(124,58,237,0.35)] transition hover:border-purple-500 hover:scale-105 active:scale-95"
+      onClick={() => setOpen(true)}
+      aria-label={t("composer.open")}
+    >
+      {t("composer.spill")} ☕
+    </button>
 
-      <button
-        className="hidden fixed bottom-5 right-5 z-[120] rounded-full bg-black text-white px-5 py-3 shadow-lg active:scale-95 transition"
-        onClick={() => setOpen(true)}
-        aria-label={t("composer.open")}
-      >
-        {t("composer.spill")} ☕
-      </button>
-
-      {open && (
-        <div className="sm:hidden fixed inset-0 z-[130] h-[100dvh] overflow-hidden">
+    {open && (
+      <div className="fixed inset-0 z-[130] h-[100dvh] overflow-hidden">
           <button
             type="button"
             aria-label={t("common.close")}
@@ -130,7 +108,7 @@ export default function SpillComposer({ tags }: { tags: PostTag[] }) {
           />
 
           <div className="absolute inset-0 z-[131] flex items-center justify-center px-3 py-6">
-            <div className="w-full rounded-[2rem] border bg-white p-4 shadow-2xl max-h-[88dvh] overflow-y-auto dark:bg-[var(--surface)] dark:border-[var(--border-strong)]">
+<div className="w-full max-w-3xl rounded-[2rem] border border-[var(--border-strong)] bg-[var(--surface)] p-4 shadow-2xl max-h-[88dvh] overflow-y-auto">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-lg font-semibold">{t("composer.spill")} ☕</h2>
                 {!showModerationMsg && (
